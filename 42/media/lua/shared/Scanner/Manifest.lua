@@ -25,14 +25,14 @@ function MaelstromMusic.Scanner.Manifest.buildGeneratedScript(stations, stationI
     for _, stationId in ipairs(stationIds) do
         local station = stations[stationId]
         for index, trackFile in ipairs(station.trackFiles) do
-            local soundName = "RadioTrack_" .. stationId .. "_" .. index
+            local soundName = "BroadcastTrack_" .. stationId .. "_" .. index
             table.insert(parts, "\tsound " .. soundName .. "\n" ..
                 "\t{\n" ..
                 "\t\tcategory = Maelstrom Music,\n" ..
                 "\t\tmaster = Ambient,\n" ..
                 "\t\tclip\n" ..
                 "\t\t{\n" ..
-                "\t\t\tfile = " .. MaelstromMusic.RADIOS_DIR .. "/" .. station.rawName .. "/" .. trackFile .. ",\n" ..
+                "\t\t\tfile = " .. station.rawDir .. "/" .. station.rawName .. "/" .. trackFile .. ",\n" ..
                 "\t\t\tdistanceMax = 75,\n" ..
                 "\t\t}\n" ..
                 "\t}\n\n")
@@ -50,11 +50,12 @@ function MaelstromMusic.Scanner.Manifest.buildStations(stations, stationIds, fre
             local station = stations[stationId]
             local trackNames = {}
             for index, _ in ipairs(station.trackFiles) do
-                table.insert(trackNames, "RadioTrack_" .. stationId .. "_" .. index)
+                table.insert(trackNames, "BroadcastTrack_" .. stationId .. "_" .. index)
             end
             result[stationId] = {
                 title = station.title,
                 shuffle = station.shuffle,
+                kind = station.kind,
                 tracks = trackNames,
                 frequency = frequency,
             }

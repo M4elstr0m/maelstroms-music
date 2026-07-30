@@ -9,7 +9,7 @@ MaelstromMusic.Channels.stationByUUID = {}
 function MaelstromMusic.Channels.refreshBroadcasts()
     for uuid, channel in pairs(MaelstromMusic.Channels.channelByUUID) do
         local stationId = MaelstromMusic.Channels.stationByUUID[uuid]
-        local station = MaelstromMusic.Stations and MaelstromMusic.Stations[stationId]
+        local station = MaelstromMusic.Broadcasts and MaelstromMusic.Broadcasts[stationId]
         if station then
             local bc = RadioBroadCast.new("RADIOSTATION-" .. tostring(ZombRand(100000, 999999)), -1, -1)
             bc:AddRadioLine(RadioLine.new("[img=music] " .. station.title .. " [img=music]", 1.0, 1.0, 1.0))
@@ -25,17 +25,18 @@ function MaelstromMusic.Channels.onLoadRadioScripts(_scriptManager, _isNewGame)
         MaelstromMusic.Channels.channelByUUID = {}
         MaelstromMusic.Channels.stationByUUID = {}
 
-        if not MaelstromMusic.Stations and MaelstromMusic.Scanner.run then
+        if not MaelstromMusic.Broadcasts and MaelstromMusic.Scanner.run then
             MaelstromMusic.Scanner.run()
         end
 
-        if not MaelstromMusic.Stations then
+        if not MaelstromMusic.Broadcasts then
             return
         end
 
-        for stationId, station in pairs(MaelstromMusic.Stations) do
+        for stationId, station in pairs(MaelstromMusic.Broadcasts) do
             local uuid = "RADIOSTATION-" .. stationId
-            local channel = DynamicRadioChannel.new(station.title, station.frequency, ChannelCategory.Radio, uuid)
+            local category = station.kind == "television" and ChannelCategory.Television or ChannelCategory.Radio
+            local channel = DynamicRadioChannel.new(station.title, station.frequency, category, uuid)
             channel:setAirCounterMultiplier(1.0)
             _scriptManager:AddChannel(channel, false)
             MaelstromMusic.Channels.channelByUUID[uuid] = channel

@@ -5,3 +5,7 @@ common/media/radios/_radios_manifest.txt
 common/media/radios/*
 !common/media/radios/example
 !common/media/radios/example.json
+
+common/media/televisions/*
+!common/media/televisions/example
+!common/media/televisions/example.json

@@ -9,7 +9,7 @@ local queueIndex = 1
 
 local function buildQueue()
     local trackNames = {}
-    for _, station in pairs(MaelstromMusic.Stations) do
+    for _, station in pairs(MaelstromMusic.Broadcasts) do
         for _, trackName in ipairs(station.tracks) do
             table.insert(trackNames, trackName)
         end

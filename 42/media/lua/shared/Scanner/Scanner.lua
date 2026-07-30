@@ -9,16 +9,21 @@ require "Frequency"
 local MANIFEST_FILE = MaelstromMusic.RADIOS_DIR .. "/_radios_manifest.txt"
 local GENERATED_SCRIPT_FILE = "media/scripts/GeneratedRadios.txt"
 
-if not MaelstromMusic.Stations then MaelstromMusic.Stations = {} end
+if not MaelstromMusic.Broadcasts then MaelstromMusic.Broadcasts = {} end
 
-local function discoverStations()
-    local stations = {}
-    for _, fileName in ipairs(MaelstromMusic.Fs.listFiles(MaelstromMusic.RADIOS_DIR)) do
-        local stationId, station = MaelstromMusic.Scanner.Station.tryLoad(fileName)
+local function discoverInDir(baseDir, kind, stations)
+    for _, fileName in ipairs(MaelstromMusic.Fs.listFiles(baseDir)) do
+        local stationId, station = MaelstromMusic.Scanner.Station.tryLoad(baseDir, kind, fileName)
         if stationId then
             stations[stationId] = station
         end
     end
+end
+
+local function discoverStations()
+    local stations = {}
+    discoverInDir(MaelstromMusic.RADIOS_DIR, "radio", stations)
+    discoverInDir(MaelstromMusic.TVS_DIR, "television", stations)
     return stations
 end
 
@@ -30,11 +35,11 @@ function MaelstromMusic.Scanner.run()
 
         for _, stationId in ipairs(stationIds) do
             if not frequencyByStationId[stationId] then
-                MaelstromMusic.Log.write("could not assign a free frequency to station '" .. stationId .. "', too many stations - skipping it.")
+                MaelstromMusic.Log.write("could not assign a free frequency to '" .. stationId .. "', too many stations - skipping it.")
             end
         end
 
-        MaelstromMusic.Stations = MaelstromMusic.Scanner.Manifest.buildStations(stations, stationIds, frequencyByStationId)
+        MaelstromMusic.Broadcasts = MaelstromMusic.Scanner.Manifest.buildStations(stations, stationIds, frequencyByStationId)
 
         local newManifest = MaelstromMusic.Scanner.Manifest.buildText(stations, stationIds)
         local oldManifest = MaelstromMusic.Fs.readFile(MANIFEST_FILE)
@@ -56,7 +61,7 @@ function MaelstromMusic.Scanner.run()
         end
 
         local count = 0
-        for _ in pairs(MaelstromMusic.Stations) do count = count + 1 end
+        for _ in pairs(MaelstromMusic.Broadcasts) do count = count + 1 end
         MaelstromMusic.Log.write(count .. " station(s) loaded.")
 
         MaelstromMusic.ScanComplete = true

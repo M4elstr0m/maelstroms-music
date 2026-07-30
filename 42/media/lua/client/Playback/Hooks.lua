@@ -38,6 +38,7 @@ function ISRadioAction:performSetChannel()
 end
 
 local origReadPresets = RWMChannel.readPresets
+local origReadPresetsTV = RWMChannelTV.readPresets
 
 local function ensureStationPresets(devicePresets, deviceData)
     local presets = devicePresets:getPresets()
@@ -45,17 +46,23 @@ local function ensureStationPresets(devicePresets, deviceData)
         return false
     end
 
-    local totalStationCount = 0
-    for _ in pairs(MaelstromMusic.Stations or {}) do totalStationCount = totalStationCount + 1 end
-    MaelstromMusic.Playback.DeviceRange.ensureWindow(deviceData, totalStationCount)
+    local wantKind = deviceData:getIsTelevision() and "television" or "radio"
+
+    local kindCount = 0
+    for _, station in pairs(MaelstromMusic.Broadcasts or {}) do
+        if station.kind == wantKind then
+            kindCount = kindCount + 1
+        end
+    end
+    MaelstromMusic.Playback.DeviceRange.ensureWindow(deviceData, kindCount)
 
     local minChannel = deviceData:getMinChannelRange()
     local maxChannel = deviceData:getMaxChannelRange()
 
     local added = false
-    for stationId, station in pairs(MaelstromMusic.Stations or {}) do
+    for stationId, station in pairs(MaelstromMusic.Broadcasts or {}) do
         local freq = station.frequency
-        if freq >= minChannel and freq <= maxChannel then
+        if station.kind == wantKind and freq >= minChannel and freq <= maxChannel then
             local found = false
             for i = 0, presets:size() - 1 do
                 if presets:get(i):getFrequency() == freq then
@@ -82,4 +89,13 @@ function RWMChannel:readPresets(_selected)
         end
     end
     origReadPresets(self, _selected)
+end
+
+function RWMChannelTV:readPresets(_selected)
+    if self.deviceData and self.deviceData:getDevicePresets() then
+        if ensureStationPresets(self.deviceData:getDevicePresets(), self.deviceData) then
+            self.deviceData:transmitPresets()
+        end
+    end
+    origReadPresetsTV(self, _selected)
 end

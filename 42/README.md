@@ -2,21 +2,23 @@
 
 Because the apocalypse deserves a soundtrack.
 
-Build a themed radio station out of your own mp3/ogg/wav files just by dropping them in a folder next to a small JSON file.
+Build a themed radio station or TV channel out of your own mp3/ogg/wav files just by dropping them in a folder next to a small JSON file.
 
-## How to add a station
+## How to add a station or TV channel
 
-1. In `media/radios/`, create a file called `<StationName>.json`, e.g.:
+Radio stations and TV channels use the exact same convention — radio stations live in `common/media/radios/`, TV channels live in `common/media/televisions/`. Everything below applies to either; just swap the folder.
+
+1. In `common/media/radios/` (or `common/media/televisions/` for a TV channel), create a file called `<Name>.json`, e.g.:
 
    ```txt
-   media/radios/queen.json
+   common/media/radios/example.json
    ```
 
    with contents:
 
    ```json
    {
-       "title": "My Radio",
+       "title": "Example Radio",
        "shuffle": true
    }
    ```
@@ -27,30 +29,31 @@ Build a themed radio station out of your own mp3/ogg/wav files just by dropping 
 2. Create a folder with the **exact same name** (no `.json`) next to it:
 
    ```txt
-   media/radios/queen/
+   common/media/radios/example/
    ```
 
 3. Drop your track files directly into that folder:
 
    ```txt
-   media/radios/queen/Bohemian Rhapsody.mp3
-   media/radios/queen/Don't Stop Me Now.mp3
-   media/radios/queen/We Will Rock You.mp3
+   common/media/radios/example/Bouillabaisse - VJazz Relaxing.mp3
+   common/media/radios/example/L'art de préparer le parfait - VJazz Relaxing.mp3
+   common/media/radios/example/Plat principal - VJazz Relaxing.mp3
+   common/media/radios/example/Ratatouille - VJazz Relaxing.mp3
    ```
 
    `.mp3`, `.ogg` and `.wav` all work.
 
-> **Note:** the JSON file has to sit next to the folder, not inside it — this is a limitation of what Project Zomboid's mod scripting API can see, not a stylistic choice.
+> **Note:** the JSON file has to sit next to the folder, not inside it — this is a limitation of what Project Zomboid's mod scripting API can see, not a stylistic choice. Content must go under the mod's `common/` folder specifically (not `42/`) — that's where the mod's own generated files always end up, and keeping your tracks there guarantees they're found correctly.
 
 ## Where to play it
 
 Start the game (or, if it's already running, just leave the main menu and come back once — the mod checks for new stations at boot).
 
-Each station becomes a real, tunable radio channel — turn on and scan the Channel dial on any portable radio, HAM radio, or car radio, and your station will show up under its title once you land on its frequency.
+Each station becomes a real, tunable radio channel, and each TV channel becomes a real, tunable TV channel — turn on and scan the Channel dial on any portable radio, HAM radio, car radio, or television, and your content will show up under its title once you land on its frequency. Radio content only shows up on radios, and TV content only shows up on TVs, even though they share the same tuning system under the hood.
 
 Don't like the current track? Press "Tune In" again on the same frequency to skip to a new one.
 
-If a station you just added doesn't show up yet, restart the game once — new sounds are normally picked up without a restart, but this is a safety net in case that doesn't happen on your setup.
+If something you just added doesn't show up yet, restart the game once — new sounds are normally picked up without a restart, but this is a safety net in case that doesn't happen on your setup.
 
 ## Limitations
 

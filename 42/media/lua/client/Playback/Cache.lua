@@ -7,16 +7,16 @@ local frequencyToStation = {}
 local frequencyToStationBuiltFor = nil
 
 function MaelstromMusic.Playback.Cache.ensureFrequencyMap()
-    if frequencyToStationBuiltFor == MaelstromMusic.Stations then
+    if frequencyToStationBuiltFor == MaelstromMusic.Broadcasts then
         return
     end
     frequencyToStation = {}
-    if MaelstromMusic.Stations then
-        for stationId, station in pairs(MaelstromMusic.Stations) do
+    if MaelstromMusic.Broadcasts then
+        for stationId, station in pairs(MaelstromMusic.Broadcasts) do
             frequencyToStation[station.frequency] = stationId
         end
     end
-    frequencyToStationBuiltFor = MaelstromMusic.Stations
+    frequencyToStationBuiltFor = MaelstromMusic.Broadcasts
 end
 
 function MaelstromMusic.Playback.Cache.stationForFrequency(frequency)
