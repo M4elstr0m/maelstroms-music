@@ -2,8 +2,7 @@ require "Namespace"
 
 MaelstromMusic.Playback.Track = {}
 
-function MaelstromMusic.Playback.Track.chooseNext(stationId, currentIndex)
-    local station = MaelstromMusic.Broadcasts and MaelstromMusic.Broadcasts[stationId]
+function MaelstromMusic.Playback.Track.chooseNext(station, currentIndex)
     if not station or not station.tracks or #station.tracks == 0 then
         return nil, nil
     end

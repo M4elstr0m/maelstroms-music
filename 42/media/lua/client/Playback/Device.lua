@@ -5,6 +5,8 @@ require "Track"
 
 MaelstromMusic.Playback.Device = {}
 
+local FADE_IN_MS = 2000
+
 local function locate(device, deviceData)
     if deviceData.isVehicleDevice and deviceData:isVehicleDevice() then
         local vehicle = deviceData:getParent() and deviceData:getParent():getVehicle()
@@ -54,13 +56,18 @@ function MaelstromMusic.Playback.Device.playStation(stationId, device)
         sound:setVolumeModifier(0.4)
     end
 
-    local trackName, trackIndex = MaelstromMusic.Playback.Track.chooseNext(stationId, existing and existing.trackIndex)
+    local station = MaelstromMusic.Broadcasts[stationId]
+    local trackName, trackIndex = MaelstromMusic.Playback.Track.chooseNext(station, existing and existing.trackIndex)
     if not trackName then
         return
     end
 
     sound:setVolume(deviceData:getDeviceVolume())
+    sound:setFadeLevel(station.fade and 0 or 1)
     sound:play(trackName)
+    if station.fade then
+        sound:fadeTo(1, FADE_IN_MS)
+    end
 
     local x, y, z = locate(device, deviceData)
 

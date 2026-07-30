@@ -25,6 +25,8 @@ local function updateEntry(entry, index, playerX, playerY, playerZ, player)
         return
     end
 
+    entry.sound:updateFade()
+
     local x, y, z = MaelstromMusic.Playback.Device.locate(entry.device, entry.deviceData)
     if x then
         entry.x, entry.y, entry.z = x, y, z

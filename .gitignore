@@ -9,3 +9,7 @@ common/media/radios/*
 common/media/televisions/*
 !common/media/televisions/example
 !common/media/televisions/example.json
+
+common/media/backgrounds/*
+
+common/media/mainmenu/*
