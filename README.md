@@ -1,10 +1,12 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/M4elstr0m/maelstroms-music/main/42/icon.png" width="140" alt="Maelstrom's Music icon">
-</p>
-
 <h1 align="center">Maelstrom's Music</h1>
 
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/641cb970-4a26-46cf-a925-2c4c2bb90a3f" width="140" alt="Maelstrom's Music icon">
+</p>
+
 <p align="center"><em>Because the apocalypse deserves a soundtrack.</em></p>
+
+#
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
