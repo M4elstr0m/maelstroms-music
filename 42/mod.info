@@ -1,5 +1,7 @@
 name=Maelstrom's Music
 poster=poster.png
+icon=icon.png
 id=maelstromsmusic
 description=Because the apocalypse deserves a soundtrack.
-versionMin=42.20
+modversion=0.1.0
+versionMin=42.20.0
