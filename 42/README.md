@@ -2,6 +2,7 @@
 <!-- markdownlint-disable MD041 -->
 <!-- markdownlint-disable MD036 -->
 <!-- markdownlint-disable MD049 -->
+<!-- markdownlint-disable MD028 -->
 
 ## <h1 align="center">Maelstrom's Music</h1>
 
@@ -78,11 +79,12 @@ Radio stations and TV channels use the exact same convention: radio stations liv
    }
    ```
 
-   | Field     | Type    | Required | Default | Description                                                                                                                                                            |
-   | --------- | ------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | `title`   | string  | Yes      | None    | Name shown in-game.                                                                                                                                                    |
-   | `shuffle` | boolean | No       | `false` | `false` plays tracks in order, looping back to the start. `true` plays them in random order.                                                                           |
-   | `fade`    | boolean | No       | `false` | Ease each track in over a couple of seconds instead of starting at full volume. Nice for music, less so for talk radio where you don't want the first words swallowed. |
+   | Field       | Type    | Required | Default | Description                                                                                                                                                            |
+   | ----------- | ------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `title`     | string  | Yes      | None    | Name shown in-game.                                                                                                                                                    |
+   | `shuffle`   | boolean | No       | `false` | `false` plays tracks in order, looping back to the start. `true` plays them in random order.                                                                           |
+   | `fade`      | boolean | No       | `false` | Ease each track in over a couple of seconds instead of starting at full volume. Nice for music, less so for talk radio where you don't want the first words swallowed. |
+   | `frequency` | number  | No       | None    | Pin the station to an exact frequency (in MHz, e.g. `95.4`) instead of letting the mod assign one automatically. See [Manual Frequencies](#manual-frequencies) below.  |
 
 2. Create a folder with the **exact same name** as the JSON file (without `.json` extension) next to it: `common/media/radios/example/`.
 
@@ -108,6 +110,27 @@ Don't like the current track? Press "Tune In" again on the channel to skip to a 
 
 > [!IMPORTANT]
 > If something you just added doesn't show up yet, restart the game.
+
+### Manual Frequencies
+
+By default, every station is auto-assigned a frequency and automatically added as a preset on every radio/TV, so it's ready to listen to the moment you turn the device on. If you'd rather have players discover a station by scanning the dial themselves instead of it just showing up as a preset (cool for roleplay), give it a fixed `frequency` in its JSON:
+
+```json
+{
+    "title": "Mystery Broadcast",
+    "shuffle": true,
+    "fade": true,
+    "frequency": 95.4
+}
+```
+
+Any station with a `frequency` field is pinned to that exact spot (matching what you'd see on an in-game dial, e.g. `95.4`) and is **not** auto-added as a preset - the player has to tune to it manually, or save their own preset once they find it. Stations without a `frequency` field are auto-assigned and auto-presetted.
+
+> [!CAUTION]
+> Changing or removing an existing station's `frequency` moves it, which can orphan presets players already saved on that station in an ongoing save. Pick a fixed frequency deliberately and try to stick with it once players are using it.
+
+> [!IMPORTANT]
+> Please set an **even** frequency. Otherwise, you will not be able to manually enter frequencies such as `95.5`, which cannot be selected.
 
 ## Custom Background Soundtrack
 

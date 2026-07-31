@@ -1,8 +1,9 @@
 require "Namespace"
+require "Log"
 
 MaelstromMusic.Frequency = {}
 
-local FREQ_STEP = 200
+local FREQ_STEP = MaelstromMusic.FREQ_STEP
 
 local UNIVERSAL_MIN = 88000
 local UNIVERSAL_MAX = 108000
@@ -48,12 +49,43 @@ local function extendedSlotToFrequency(index)
     return (UNIVERSAL_MAX + FREQ_STEP) + (index - BELOW_UNIVERSAL_SLOT_COUNT) * FREQ_STEP
 end
 
-function MaelstromMusic.Frequency.assign(stationIds)
+local function reserveFixedSlot(frequency, universalTaken, extendedTaken)
+    if frequency >= UNIVERSAL_MIN and frequency <= UNIVERSAL_MAX then
+        universalTaken[(frequency - UNIVERSAL_MIN) / FREQ_STEP] = true
+    elseif frequency < UNIVERSAL_MIN and frequency >= EXTENDED_MIN then
+        extendedTaken[math.floor((frequency - EXTENDED_MIN) / FREQ_STEP)] = true
+    elseif frequency > UNIVERSAL_MAX and frequency <= EXTENDED_MAX then
+        extendedTaken[BELOW_UNIVERSAL_SLOT_COUNT + math.floor((frequency - (UNIVERSAL_MAX + FREQ_STEP)) / FREQ_STEP)] = true
+    end
+end
+
+function MaelstromMusic.Frequency.assign(stationIds, fixedFrequencyByStationId)
+    fixedFrequencyByStationId = fixedFrequencyByStationId or {}
+
     local frequencyByStationId = {}
     local universalTaken = {}
     local extendedTaken = {}
+    local exactTaken = {}
+    local autoIds = {}
 
     for _, stationId in ipairs(stationIds) do
+        local fixed = fixedFrequencyByStationId[stationId]
+        if fixed then
+            local owner = exactTaken[fixed]
+            if owner then
+                MaelstromMusic.Log.write("'" .. stationId .. "' wants fixed frequency " .. (fixed / 1000) .. ", but '" .. owner .. "' already uses it - assigning '" .. stationId .. "' automatically instead.")
+                table.insert(autoIds, stationId)
+            else
+                exactTaken[fixed] = stationId
+                frequencyByStationId[stationId] = fixed
+                reserveFixedSlot(fixed, universalTaken, extendedTaken)
+            end
+        else
+            table.insert(autoIds, stationId)
+        end
+    end
+
+    for _, stationId in ipairs(autoIds) do
         local hash = stationHash(stationId)
         local universalSlot = probeSlot(hash, UNIVERSAL_SLOT_COUNT, universalTaken)
         if universalSlot then

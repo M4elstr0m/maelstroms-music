@@ -3,7 +3,7 @@ require "Frequency"
 
 MaelstromMusic.Playback.DeviceRange = {}
 
-local FREQ_STEP = 200
+local FREQ_STEP = MaelstromMusic.FREQ_STEP
 
 local function stableDeviceId(deviceData)
     local ok, vehicle = pcall(function()

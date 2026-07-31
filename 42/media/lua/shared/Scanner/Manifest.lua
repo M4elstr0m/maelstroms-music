@@ -60,6 +60,7 @@ function MaelstromMusic.Scanner.Manifest.buildStations(stations, stationIds, fre
                 kind = station.kind,
                 tracks = trackNames,
                 frequency = frequency,
+                autoPreset = not station.fixedFrequency,
             }
         end
     end

@@ -40,11 +40,11 @@ Maelstrom's Music scans every currently active Workshop mod at boot. Any mod tha
    - `common/media/backgrounds/<Name>.json` + `common/media/backgrounds/<Name>/` for a background soundtrack
    - `common/media/mainmenu/<file>` for a main menu theme
 
-   Same field names (`title`, `shuffle`, `fade`, `drama`), same rules (comma-free filenames, JSON sitting next to the folder rather than inside it, `.mp3`/`.ogg`/`.wav` only).
+   Same field names (`title`, `shuffle`, `fade`, `drama`, `frequency`), same rules (comma-free filenames, JSON sitting next to the folder rather than inside it, `.mp3`/`.ogg`/`.wav` only).
 
 ## What merges, and what doesn't
 
-- **Radio stations and TV channels always merge.** Every active addon's stations are added alongside the base mod's own and everyone else's - that's the entire point of this system. Frequencies are assigned automatically across everything combined, so you never need to coordinate frequency numbers with anyone.
+- **Radio stations and TV channels always merge.** Every active addon's stations are added alongside the base mod's own and everyone else's - that's the entire point of this system. Frequencies are assigned automatically across everything combined, so you never need to coordinate frequency numbers with anyone - unless you pin one with `frequency` (see the main README's [Manual Frequencies](README.md#manual-frequencies) section), in which case it's checked for collisions against every other source too; if two stations (from any source, including the base mod) pin the same spot, one falls back to auto-assignment instead, logged clearly so you know it happened.
 - **Background soundtrack and main menu theme are exclusive.** Only one active source gets to supply each of these - mixing two unrelated background soundtracks or two main menu themes together wouldn't sound intentional, so only one wins. The base mod's own `common/media/backgrounds/` or `common/media/mainmenu/` always takes priority if the player has set one up themselves; otherwise, whichever addon's mod ID sorts first alphabetically wins, and every other contender is skipped with a clear log line explaining why. If your addon's background soundtrack or menu theme isn't playing, check the console log for that message first - it means another mod won that slot, not that something is broken.
 
 ## Avoiding folder-name collisions

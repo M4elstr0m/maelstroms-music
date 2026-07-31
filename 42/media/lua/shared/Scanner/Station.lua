@@ -26,6 +26,14 @@ local function getExtension(fileName)
     return ext and string.lower(ext) or nil
 end
 
+local function normalizeFrequency(value)
+    if type(value) ~= "number" or value <= 0 then
+        return nil
+    end
+    local step = MaelstromMusic.FREQ_STEP
+    return math.floor((value * 1000) / step + 0.5) * step
+end
+
 local function collectTrackFiles(modId, baseDir, name)
     local trackFiles = {}
     for _, trackFile in ipairs(MaelstromMusic.Fs.listFilesFrom(modId, baseDir .. "/" .. name)) do
@@ -76,6 +84,14 @@ function MaelstromMusic.Scanner.Station.tryLoad(modId, baseDir, kind, fileName)
         stationId = KIND_ID_PREFIX[kind] .. sanitizeIdentifier(modId) .. "_" .. sanitizeIdentifier(name)
     end
 
+    local fixedFrequency = nil
+    if (kind == "radio" or kind == "television") and data.frequency ~= nil then
+        fixedFrequency = normalizeFrequency(data.frequency)
+        if not fixedFrequency then
+            MaelstromMusic.Log.write(baseDir .. "/" .. fileName .. " in mod '" .. modId .. "' has an invalid \"frequency\" field (must be a positive number), assigning one automatically instead.")
+        end
+    end
+
     return stationId, {
         ownerModId = modId,
         rawDir = baseDir,
@@ -85,6 +101,7 @@ function MaelstromMusic.Scanner.Station.tryLoad(modId, baseDir, kind, fileName)
         shuffle = data.shuffle == true,
         fade = data.fade == true,
         drama = data.drama,
+        fixedFrequency = fixedFrequency,
         trackFiles = trackFiles,
     }
 end

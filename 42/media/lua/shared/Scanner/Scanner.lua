@@ -128,14 +128,18 @@ function MaelstromMusic.Scanner.run()
         local stationIds = MaelstromMusic.Scanner.Manifest.sortedStationIds(stations)
 
         local tunableIds = {}
+        local fixedFrequencyByStationId = {}
         for _, stationId in ipairs(stationIds) do
-            local kind = stations[stationId].kind
-            if kind ~= "background" and kind ~= "mainmenu" then
+            local station = stations[stationId]
+            if station.kind ~= "background" and station.kind ~= "mainmenu" then
                 table.insert(tunableIds, stationId)
+                if station.fixedFrequency then
+                    fixedFrequencyByStationId[stationId] = station.fixedFrequency
+                end
             end
         end
 
-        local frequencyByStationId = MaelstromMusic.Frequency.assign(tunableIds)
+        local frequencyByStationId = MaelstromMusic.Frequency.assign(tunableIds, fixedFrequencyByStationId)
         for _, stationId in ipairs(tunableIds) do
             if not frequencyByStationId[stationId] then
                 MaelstromMusic.Log.write("could not assign a free frequency to '" .. stationId .. "', too many stations - skipping it.")

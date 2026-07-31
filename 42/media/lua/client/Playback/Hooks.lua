@@ -62,7 +62,7 @@ local function ensureStationPresets(devicePresets, deviceData)
     local added = false
     for stationId, station in pairs(MaelstromMusic.Broadcasts or {}) do
         local freq = station.frequency
-        if station.kind == wantKind and freq >= minChannel and freq <= maxChannel then
+        if station.kind == wantKind and station.autoPreset and freq >= minChannel and freq <= maxChannel then
             local found = false
             for i = 0, presets:size() - 1 do
                 if presets:get(i):getFrequency() == freq then
