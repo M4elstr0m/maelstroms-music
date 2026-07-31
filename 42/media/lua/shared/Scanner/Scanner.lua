@@ -5,6 +5,7 @@ require "Fs"
 require "Station"
 require "Manifest"
 require "Frequency"
+require "AddonDiscovery"
 
 local MANIFEST_FILE = MaelstromMusic.RADIOS_DIR .. "/_radios_manifest.txt"
 local GENERATED_SCRIPT_FILE = "media/scripts/GeneratedRadios.txt"
@@ -13,9 +14,9 @@ local MAINMENU_EXTENSIONS = { mp3 = true, ogg = true, wav = true }
 if not MaelstromMusic.Broadcasts then MaelstromMusic.Broadcasts = {} end
 if not MaelstromMusic.Backgrounds then MaelstromMusic.Backgrounds = {} end
 
-local function discoverInDir(baseDir, kind, stations)
-    for _, fileName in ipairs(MaelstromMusic.Fs.listFiles(baseDir)) do
-        local stationId, station = MaelstromMusic.Scanner.Station.tryLoad(baseDir, kind, fileName)
+local function discoverInDir(modId, baseDir, kind, stations)
+    for _, fileName in ipairs(MaelstromMusic.Fs.listFilesFrom(modId, baseDir)) do
+        local stationId, station = MaelstromMusic.Scanner.Station.tryLoad(modId, baseDir, kind, fileName)
         if stationId then
             stations[stationId] = station
         end
@@ -27,9 +28,9 @@ local function getExtension(fileName)
     return ext and string.lower(ext) or nil
 end
 
-local function discoverMainMenu(stations)
+local function findMainMenuFile(modId)
     local files = {}
-    for _, fileName in ipairs(MaelstromMusic.Fs.listFiles(MaelstromMusic.MAINMENU_DIR)) do
+    for _, fileName in ipairs(MaelstromMusic.Fs.listFilesFrom(modId, MaelstromMusic.MAINMENU_DIR)) do
         local ext = getExtension(fileName)
         if ext and MAINMENU_EXTENSIONS[ext] then
             if string.find(fileName, ",", 1, true) then
@@ -40,35 +41,90 @@ local function discoverMainMenu(stations)
         end
     end
     if #files == 0 then
-        return
+        return nil
     end
     table.sort(files)
     if #files > 1 then
-        MaelstromMusic.Log.write("found " .. #files .. " files in " .. MaelstromMusic.MAINMENU_DIR .. ", using '" .. files[1] .. "' and ignoring the rest.")
+        MaelstromMusic.Log.write("found " .. #files .. " files in " .. MaelstromMusic.MAINMENU_DIR .. " for mod '" .. modId .. "', using '" .. files[1] .. "' and ignoring the rest.")
     end
-
-    stations["mainmenu"] = {
-        rawDir = MaelstromMusic.MAINMENU_DIR,
-        rawName = "",
-        kind = "mainmenu",
-        title = "Main Menu Theme",
-        shuffle = false,
-        trackFiles = { files[1] },
-    }
+    return files[1]
 end
 
-local function discoverStations()
+local function buildSources()
+    local sources = { { modId = MaelstromMusic.MOD_ID, name = "Maelstrom's Music" } }
+    for _, addon in ipairs(MaelstromMusic.Addons.Discovery.scan()) do
+        table.insert(sources, addon)
+    end
+    return sources
+end
+
+local function isEmpty(t)
+    for _ in pairs(t) do
+        return false
+    end
+    return true
+end
+
+local function discoverStations(sources)
     local stations = {}
-    discoverInDir(MaelstromMusic.RADIOS_DIR, "radio", stations)
-    discoverInDir(MaelstromMusic.TVS_DIR, "television", stations)
-    discoverInDir(MaelstromMusic.BACKGROUNDS_DIR, "background", stations)
-    discoverMainMenu(stations)
+
+    for _, source in ipairs(sources) do
+        discoverInDir(source.modId, MaelstromMusic.RADIOS_DIR, "radio", stations)
+        discoverInDir(source.modId, MaelstromMusic.TVS_DIR, "television", stations)
+    end
+
+    local backgroundWinner = nil
+    for _, source in ipairs(sources) do
+        local candidate = {}
+        discoverInDir(source.modId, MaelstromMusic.BACKGROUNDS_DIR, "background", candidate)
+        if not isEmpty(candidate) then
+            if not backgroundWinner then
+                backgroundWinner = source
+                for stationId, station in pairs(candidate) do
+                    stations[stationId] = station
+                end
+            else
+                MaelstromMusic.Log.write("background soundtrack from '" .. source.name .. "' (" .. source.modId .. ") was ignored because '" .. backgroundWinner.name .. "' (" .. backgroundWinner.modId .. ") already provides one - only one background soundtrack can be active at a time.")
+            end
+        end
+    end
+
+    local mainMenuWinner = nil
+    for _, source in ipairs(sources) do
+        local fileName = findMainMenuFile(source.modId)
+        if fileName then
+            if not mainMenuWinner then
+                mainMenuWinner = source
+                stations["mainmenu"] = {
+                    ownerModId = source.modId,
+                    rawDir = MaelstromMusic.MAINMENU_DIR,
+                    rawName = "",
+                    kind = "mainmenu",
+                    title = "Main Menu Theme",
+                    shuffle = false,
+                    trackFiles = { fileName },
+                }
+            else
+                MaelstromMusic.Log.write("main menu theme from '" .. source.name .. "' (" .. source.modId .. ") was ignored because '" .. mainMenuWinner.name .. "' (" .. mainMenuWinner.modId .. ") already provides one - only one main menu theme can be active at a time.")
+            end
+        end
+    end
+
     return stations
 end
 
 function MaelstromMusic.Scanner.run()
     MaelstromMusic.Safe.call("scan failed", function()
-        local stations = discoverStations()
+        local sources = buildSources()
+        if #sources > 1 then
+            local names = {}
+            for i = 2, #sources do
+                table.insert(names, sources[i].name .. " (" .. sources[i].modId .. ")")
+            end
+            MaelstromMusic.Log.write("found " .. #names .. " addon(s): " .. table.concat(names, ", "))
+        end
+
+        local stations = discoverStations(sources)
         local stationIds = MaelstromMusic.Scanner.Manifest.sortedStationIds(stations)
 
         local tunableIds = {}

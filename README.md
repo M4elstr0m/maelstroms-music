@@ -37,6 +37,7 @@ No strange audio editing, no additional UIs, no sound-bank hacking, just audio f
 - [Adding a Radio Station or TV Channel](#adding-a-radio-station-or-tv-channel)
 - [Custom Background Soundtrack](#custom-background-soundtrack)
 - [Main Menu Theme](#main-menu-theme)
+- [Addon Mods](#addon-mods)
 - [Limitations](#limitations)
 - [Credits](#credits)
 - [License](#license)
@@ -152,6 +153,35 @@ common/media/mainmenu/My Theme.mp3
 
 That's it. Drop exactly one `.mp3`, `.ogg`, or `.wav` file in `common/media/mainmenu/`, and it replaces the vanilla main menu music.
 
+## Addon Mods
+
+Other Workshop mod authors can ship their own radio stations, TV channels, background soundtrack, or main menu theme in a **separate** mod that plugs directly into Maelstrom's Music. Players just subscribe to both, no manual file copying involved.
+
+> [!NOTE]
+> This section is for mod authors publishing their own addon. If you're just adding your own music to your own game, you don't need any of this, in that case, see the sections above.
+
+At boot, Maelstrom's Music scans every other active mod that:
+
+1. Declares `require=maelstromsmusic` in its `mod.info`.
+2. Ships a `common/maelstroms-music-addon.json` marker file:
+
+   ```json
+   {
+       "addon": "maelstroms-music-addon",
+       "apiVersion": 1
+   }
+   ```
+
+Any mod meeting both conditions gets scanned using the exact same `common/media/radios|televisions|backgrounds|mainmenu` convention described above.
+
+- **Radio stations and TV channels always merge.** Every active addon's stations are added alongside the base mod's own and everyone else's, with frequencies assigned automatically across everything combined.
+- **Background soundtrack and main menu theme are exclusive.** Only one active source supplies each. The base mod's own `backgrounds/`/`mainmenu/` wins if the player set one up themselves; otherwise the first addon (alphabetically by mod ID) wins, and every other contender is skipped with a clear line in the console log explaining why.
+
+> [!CAUTION]
+> Project Zomboid resolves audio files by relative path across *all* active mods. If two addons (or an addon and the base mod's own `example` station) use an identically named station folder, one can silently shadow the other's audio. Use a distinctive folder name for your stations.
+
+See [ADDONS.md](ADDONS.md) for the full addon creation guide.
+
 ## Limitations
 
 - **No cross-player sync:** in multiplayer, two players tuned to the same station may hear different tracks from it at the same moment (each player's game picks independently since it is based on local folders).
@@ -159,7 +189,7 @@ That's it. Drop exactly one `.mp3`, `.ogg`, or `.wav` file in `common/media/main
 
 ## Roadmap
 
-- [ ] Downloadable Steam Workshop addon system
+- [x] Steam Workshop addon system - see [Addon Mods](#addon-mods)
 - [ ] Middleware to add tracks from a Youtube playlist directly
 
 ## Credits

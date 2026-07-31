@@ -2,10 +2,8 @@ require "Namespace"
 
 MaelstromMusic.Fs = {}
 
-local MOD_ID = "maelstromsmusic"
-
-function MaelstromMusic.Fs.readFile(relativePath)
-    local ok, reader = pcall(getModFileReader, MOD_ID, relativePath, false)
+function MaelstromMusic.Fs.readFileFrom(modId, relativePath)
+    local ok, reader = pcall(getModFileReader, modId, relativePath, false)
     if not ok or not reader then
         return nil
     end
@@ -25,8 +23,28 @@ function MaelstromMusic.Fs.readFile(relativePath)
     return table.concat(lines, "\n")
 end
 
+function MaelstromMusic.Fs.listFilesFrom(modId, relativePath)
+    local ok, result = pcall(listFilesInModDirectory, modId, relativePath)
+    if not ok or not result then
+        return {}
+    end
+    local files = {}
+    for i = 0, result:size() - 1 do
+        table.insert(files, result:get(i))
+    end
+    return files
+end
+
+function MaelstromMusic.Fs.readFile(relativePath)
+    return MaelstromMusic.Fs.readFileFrom(MaelstromMusic.MOD_ID, relativePath)
+end
+
+function MaelstromMusic.Fs.listFiles(relativePath)
+    return MaelstromMusic.Fs.listFilesFrom(MaelstromMusic.MOD_ID, relativePath)
+end
+
 function MaelstromMusic.Fs.writeFile(relativePath, content)
-    local ok, writer = pcall(getModFileWriter, MOD_ID, relativePath, true, false)
+    local ok, writer = pcall(getModFileWriter, MaelstromMusic.MOD_ID, relativePath, true, false)
     if not ok or not writer then
         return false
     end
@@ -39,16 +57,4 @@ function MaelstromMusic.Fs.writeFile(relativePath, content)
         return false
     end
     return true
-end
-
-function MaelstromMusic.Fs.listFiles(relativePath)
-    local ok, result = pcall(listFilesInModDirectory, MOD_ID, relativePath)
-    if not ok or not result then
-        return {}
-    end
-    local files = {}
-    for i = 0, result:size() - 1 do
-        table.insert(files, result:get(i))
-    end
-    return files
 end
