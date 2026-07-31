@@ -28,6 +28,13 @@ local function play()
     startedAt = getTimestampMs()
 end
 
+local function holdMusicState()
+    MaelstromMusic.Safe.call("could not hold the main menu music state", function()
+        getSoundManager():setMusicState("MainMenu")
+        getSoundManager():StopMusic()
+    end)
+end
+
 local function finish()
     if sound then
         MaelstromMusic.Safe.call("could not stop the main menu theme", function()
@@ -64,10 +71,21 @@ local function onGameStart()
     sound:fadeOutAndStop(FADE_OUT_MS)
 end
 
+local function onPreMapLoad()
+    if active then
+        holdMusicState()
+    end
+end
+
 local function onRenderTick()
     MaelstromMusic.VanillaMusic.refresh()
 
-    if not active or not sound then
+    if not active then
+        return
+    end
+    holdMusicState()
+
+    if not sound then
         return
     end
 
@@ -88,4 +106,5 @@ end
 
 Events.OnMainMenuEnter.Add(onMainMenuEnter)
 Events.OnGameStart.Add(onGameStart)
+Events.OnPreMapLoad.Add(onPreMapLoad)
 Events.OnRenderTick.Add(onRenderTick)
