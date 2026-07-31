@@ -1,8 +1,9 @@
-name=Maelstrom's Music
-poster=poster.png
-icon=icon.png
 id=maelstromsmusic
+author=M4elstr0m
+name=Maelstrom's Music
 description=Because the apocalypse deserves a soundtrack.
-url=https://github.com/M4elstr0m/maelstroms-music
 modversion=1.0.0
 versionMin=42.20.0
+url=https://github.com/M4elstr0m/maelstroms-music
+icon=icon.png
+poster=poster.png
