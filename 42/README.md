@@ -190,7 +190,7 @@ See [ADDONS.md](ADDONS.md) for the full addon creation guide.
 ## Roadmap
 
 - [x] Steam Workshop addon system - see [Addon Mods](#addon-mods)
-- [ ] Middleware to add tracks from a Youtube playlist directly
+- [ ] Display music title when it starts playing on radio
 
 ## Credits
 
