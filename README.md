@@ -168,4 +168,4 @@ That's it. Drop exactly one `.mp3`, `.ogg`, or `.wav` file in `common/media/main
 
 ## License
 
-Released under the [MIT License](LICENSE).
+Released under a [MIT License (Non-Commercial Variant)](LICENSE) license.
