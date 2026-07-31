@@ -1,0 +1,6 @@
+version=1
+id=
+title=Maelstrom's Music
+description=Because the apocalypse deserves a soundtrack.
+tags=Build 42
+visibility=public

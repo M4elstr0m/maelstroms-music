@@ -1,16 +1,16 @@
-common/media/scripts/GeneratedRadios.txt
-common/media/radios/_radios_manifest.txt
+Contents/mods/maelstroms-music/common/media/scripts/GeneratedRadios.txt
+Contents/mods/maelstroms-music/common/media/radios/_radios_manifest.txt
 
-common/media/radios/*
-!common/media/radios/.gitkeep
-!common/media/radios/example
-!common/media/radios/example.json
+Contents/mods/maelstroms-music/common/media/radios/*
+!Contents/mods/maelstroms-music/common/media/radios/.gitkeep
+!Contents/mods/maelstroms-music/common/media/radios/example
+!Contents/mods/maelstroms-music/common/media/radios/example.json
 
-common/media/televisions/*
-!common/media/televisions/.gitkeep
+Contents/mods/maelstroms-music/common/media/televisions/*
+!Contents/mods/maelstroms-music/common/media/televisions/.gitkeep
 
-common/media/backgrounds/*
-!common/media/backgrounds/.gitkeep
+Contents/mods/maelstroms-music/common/media/backgrounds/*
+!Contents/mods/maelstroms-music/common/media/backgrounds/.gitkeep
 
-common/media/mainmenu/*
-!common/media/mainmenu/.gitkeep
+Contents/mods/maelstroms-music/common/media/mainmenu/*
+!Contents/mods/maelstroms-music/common/media/mainmenu/.gitkeep
