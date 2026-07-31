@@ -53,7 +53,7 @@ No strange audio editing, no additional UIs, no sound-bank hacking, just audio f
 
 ## Installation
 
-1. Download the mod from the [Steam Workshop]().
+1. Download the mod from the [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3775149796).
 2. Enable **Maelstrom's Music** from the in-game Mods menu.
 3. [_Optional_] Restart your game to prevent unexpected bugs
 
