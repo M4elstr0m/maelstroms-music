@@ -45,6 +45,11 @@ No strange audio editing, no additional UIs, no sound-bank hacking, just audio f
 
 ## Features
 
+One mod to rule them all. It should basically gather every music mods in one.
+
+> [!IMPORTANT]
+> Without any addon installed, this mod only adds on his own a sample radio station with 4 free-of-use jazzy music.
+
 - **Unlimited custom radio stations and TV channels**: Add as many as you like. New devices automatically get a random spread across the frequency range instead of always the same first few, so large libraries does not always show the first hundreds.
 - **Adaptive background soundtrack**: replace the vanilla OST with your own, scored on the same 0–10 "drama" scale the game already uses, so it reacts to danger exactly like vanilla music does.
 - **Custom main menu theme**: a single track that carries seamlessly through the loading screen into gameplay, with a smooth fade instead of a hard cut.
