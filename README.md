@@ -61,7 +61,7 @@ Everything below is about adding your own music to the game.
 ## Adding a Radio Station or TV Channel
 
 > [!IMPORTANT]
-> The `common/` folder mentioned below should be located in your Steam Workshop mod folder : `C:\Program Files (x86)\Steam\steamapps\workshop\content\108600\3773911887\mods\THIS_MOD_ID\common\` 
+> The `common/` folder mentioned below should be located in your Steam Workshop mod folder : `C:\Program Files (x86)\Steam\steamapps\workshop\content\108600\3773911887\mods\maelstroms-music\common\`
 
 Radio stations and TV channels use the exact same convention: radio stations live in `common/media/radios/`, TV channels live in `common/media/televisions/`. Everything below applies to either; just swap the folder.
 
