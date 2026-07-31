@@ -25,7 +25,9 @@
 ## <p align="center">Please [star](https://github.com/M4elstr0m/maelstroms-music/stargazers) this repository if you find it useful ⭐</p>
 
 <h6>
-A Project Zomboid mod that turns your own mp3/ogg/wav files into fully tunable radio stations, TV channels, an adaptive background soundtrack, and a custom main menu theme. No audio editing, no sound-bank hacking, just audio files in folders.
+A Project Zomboid mod that turns your own mp3/ogg/wav files into fully tunable radio stations, TV channels, an adaptive background soundtrack, and a custom main menu theme.
+
+No strange audio editing, no additional UIs, no sound-bank hacking, just audio files in mod folders.
 </h6>
 
 ## Table of Contents
