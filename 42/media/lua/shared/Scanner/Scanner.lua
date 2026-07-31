@@ -176,3 +176,4 @@ function MaelstromMusic.Scanner.run()
 end
 
 Events.OnGameBoot.Add(MaelstromMusic.Scanner.run)
+Events.OnModsModified.Add(MaelstromMusic.Scanner.run)

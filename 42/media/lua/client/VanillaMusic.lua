@@ -29,6 +29,15 @@ local function anyClaim()
     return false
 end
 
+function MaelstromMusic.VanillaMusic.restore()
+    claims = {}
+    silenced = false
+    lastAppliedAt = 0
+    MaelstromMusic.Safe.call("could not restore the vanilla soundtrack", function()
+        getSoundManager():setMusicVolume(MaelstromMusic.VanillaMusic.optionVolume())
+    end)
+end
+
 function MaelstromMusic.VanillaMusic.refresh()
     if anyClaim() then
         local now = getTimestampMs()
