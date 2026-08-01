@@ -14,6 +14,23 @@ local discoveryCounter = 0
 local tickCounter = 0
 local finishedCounters = {}
 
+local function stopAllEntries()
+    local entries = MaelstromMusic.Playback.Cache.entries
+    for index = #entries, 1, -1 do
+        local entry = entries[index]
+        MaelstromMusic.Safe.call("could not stop a cached device sound", function()
+            entry.sound:stop()
+        end)
+        MaelstromMusic.Playback.Cache.removeAt(index)
+    end
+end
+
+local function checkPlayerGone()
+    if #MaelstromMusic.Playback.Cache.entries > 0 and not getPlayer() then
+        stopAllEntries()
+    end
+end
+
 local function updateEntry(entry, index, playerX, playerY, playerZ, player)
     local stillTuned = entry.device and entry.deviceData:getIsTurnedOn() and
         MaelstromMusic.Playback.Cache.stationForFrequency(entry.deviceData:getChannel()) == entry.stationId
@@ -97,3 +114,4 @@ function MaelstromMusic.Playback.Tick.onTick()
 end
 
 Events.OnTick.Add(MaelstromMusic.Playback.Tick.onTick)
+Events.OnRenderTick.Add(checkPlayerGone)

@@ -198,5 +198,12 @@ function MaelstromMusic.Ambience.Director.onTick()
     playTrack(pickBackgroundId(MaelstromMusic.Ambience.Mood.current()))
 end
 
+local function checkPlayerGone()
+    if takenOver and not getPlayer() then
+        release()
+    end
+end
+
 Events.OnTick.Add(MaelstromMusic.Ambience.Director.onTick)
+Events.OnRenderTick.Add(checkPlayerGone)
 Events.OnMainMenuEnter.Add(release)

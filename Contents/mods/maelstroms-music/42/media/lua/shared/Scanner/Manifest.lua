@@ -11,8 +11,10 @@ function MaelstromMusic.Scanner.Manifest.sortedStationIds(stations)
     return stationIds
 end
 
+local SCRIPT_SCHEMA_VERSION = 2
+
 function MaelstromMusic.Scanner.Manifest.buildText(stations, stationIds)
-    local lines = {}
+    local lines = { "schema|" .. SCRIPT_SCHEMA_VERSION }
     for _, stationId in ipairs(stationIds) do
         local station = stations[stationId]
         table.insert(lines, stationId .. "|" .. station.title .. "|" .. tostring(station.shuffle) .. "|" .. table.concat(station.trackFiles, ","))
@@ -31,6 +33,7 @@ function MaelstromMusic.Scanner.Manifest.buildGeneratedScript(stations, stationI
                 "\t{\n" ..
                 "\t\tcategory = Maelstrom Music,\n" ..
                 "\t\tmaster = Ambient,\n" ..
+                "\t\tis3D = false,\n" ..
                 "\t\tclip\n" ..
                 "\t\t{\n" ..
                 "\t\t\tfile = " .. filePath .. ",\n" ..
