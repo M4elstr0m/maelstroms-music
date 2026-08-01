@@ -218,6 +218,9 @@ See [ADDONS.md](ADDONS.md) for the full addon creation guide.
 ## Roadmap
 
 - [x] Steam Workshop addon system - see [Addon Mods](#addon-mods)
+- [ ] Add "Loading addons..." pop-up on game load
+- [ ] Add delay between Main Menu music replays
+- [ ] Improve Background music transitions & moods
 - [ ] Display music title when it starts playing on radio
 
 ## Credits
