@@ -78,4 +78,4 @@ That's it, no Lua required, just files in folders.
 
 ## Wanna see it in action?
 
-Just download the [first Maelstrom's Music addon ever made]()!
+Just download the [first Maelstrom's Music addon ever made](https://steamcommunity.com/sharedfiles/filedetails/?id=3775264398)!
