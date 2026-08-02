@@ -222,6 +222,7 @@ See [ADDONS.md](ADDONS.md) for the full addon creation guide.
 - [ ] Add delay between Main Menu music replays
 - [ ] Improve Background music transitions & moods
 - [ ] Display music title when it starts playing on radio
+- [ ] Optimize loading time (if possible, I don't know yet)
 
 ## Credits
 
