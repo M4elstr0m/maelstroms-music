@@ -16,6 +16,7 @@ local MAX_GAP_TICKS = 4800
 local FADE_IN_MS = 4000
 local FADE_OUT_MS = 3000
 local LOOKAHEAD = 2
+local RESUME_ELIGIBLE_MS = 30000
 
 local sound = nil
 local currentId = nil
@@ -27,6 +28,8 @@ local takenOver = false
 local gapTicksRemaining = 0
 local radioSuppressed = false
 local nextPicks = {}
+local interruptedTrack = {}
+local trackStartedAt = 0
 
 local function hasBackgrounds()
     if not MaelstromMusic.Backgrounds then
@@ -110,26 +113,34 @@ local function playTrack(backgroundId)
         return
     end
 
-    ensurePicks(backgroundId, background)
-    local picks = nextPicks[backgroundId]
-    local trackName, trackIndex
-    if #picks > 0 then
-        local pick = table.remove(picks, 1)
-        trackName, trackIndex = pick.name, pick.index
+    local trackName, trackIndex, resumed
+    local resumeIndex = interruptedTrack[backgroundId]
+    if resumeIndex and background.trackFiles[resumeIndex] then
+        trackIndex = resumeIndex
+        trackName = background.tracks[resumeIndex]
+        resumed = true
     else
-        trackName, trackIndex = MaelstromMusic.Playback.Track.chooseNext(background, currentTrackIndex)
+        ensurePicks(backgroundId, background)
+        local picks = nextPicks[backgroundId]
+        if #picks > 0 then
+            local pick = table.remove(picks, 1)
+            trackName, trackIndex = pick.name, pick.index
+        else
+            trackName, trackIndex = MaelstromMusic.Playback.Track.chooseNext(background, currentTrackIndex)
+        end
     end
     if not trackName then
         startNewGap()
         return
     end
+    interruptedTrack[backgroundId] = nil
 
     currentId = backgroundId
     currentTrackIndex = trackIndex
 
     ensurePicks(backgroundId, background)
 
-    MaelstromMusic.Log.write("background '" .. background.title .. "' now playing: " .. tostring(background.trackFiles[trackIndex]))
+    MaelstromMusic.Log.write("background '" .. background.title .. "' now playing: " .. tostring(background.trackFiles[trackIndex]) .. (resumed and " (resumed)" or ""))
 
     if not sound then
         sound = MaelstromMusic.Sound:new()
@@ -139,6 +150,7 @@ local function playTrack(backgroundId)
     sound:setFadeLevel(0)
     sound:play(trackName)
     sound:fadeTo(1, FADE_IN_MS)
+    trackStartedAt = getTimestampMs()
 end
 
 local function beginFadeOut(nextId)
@@ -150,6 +162,9 @@ local function beginFadeOut(nextId)
             startNewGap()
         end
         return
+    end
+    if currentId and currentTrackIndex and getTimestampMs() - trackStartedAt < RESUME_ELIGIBLE_MS then
+        interruptedTrack[currentId] = currentTrackIndex
     end
     pendingId = nextId
     fadingOut = true
@@ -222,7 +237,9 @@ function MaelstromMusic.Ambience.Director.onTick()
         if moodCounter >= MOOD_CHECK_INTERVAL then
             moodCounter = 0
             local desiredId = pickBackgroundId(MaelstromMusic.Ambience.Mood.current())
-            if desiredId ~= currentId then
+            -- Only rising drama cuts in immediately; calming down waits for the current track
+            -- to end naturally, then whichever mood fits by then (possibly calmer still) plays.
+            if desiredId ~= currentId and MaelstromMusic.Backgrounds[desiredId].drama > MaelstromMusic.Backgrounds[currentId].drama then
                 beginFadeOut(desiredId)
                 return
             end

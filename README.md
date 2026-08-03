@@ -219,8 +219,8 @@ See [ADDONS.md](ADDONS.md) for the full addon creation guide.
 
 - [x] Steam Workshop addon system - see [Addon Mods](#addon-mods)
 - [x] Optimize loading time (gradual loading, can't do better I think for now)
-- [ ] Improve Background music transitions & moods
-- [ ] Add delay between Main Menu music replays
+- [x] Improve Background music transitions & moods (drama override & replay on skip)
+- [ ] Add delay between Main Menu music replays & allow multiple main menu music
 - [ ] Display music title when it starts playing on radio
 
 ## Credits
