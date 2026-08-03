@@ -62,6 +62,7 @@ function MaelstromMusic.Scanner.Manifest.buildStations(stations, stationIds, fre
                 fade = station.fade,
                 kind = station.kind,
                 tracks = trackNames,
+                trackFiles = station.trackFiles,
                 frequency = frequency,
                 autoPreset = not station.fixedFrequency,
             }
@@ -84,6 +85,7 @@ function MaelstromMusic.Scanner.Manifest.buildBackgrounds(stations, stationIds)
                 shuffle = station.shuffle,
                 drama = station.drama,
                 tracks = trackNames,
+                trackFiles = station.trackFiles,
             }
         end
     end

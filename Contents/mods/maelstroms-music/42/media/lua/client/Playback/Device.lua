@@ -1,11 +1,55 @@
 require "Namespace"
+require "Log"
 require "Sound"
 require "Cache"
 require "Track"
+require "Warmup"
 
 MaelstromMusic.Playback.Device = {}
 
 local FADE_IN_MS = 2000
+local MAX_SEEDED_STATIONS = 12
+local LOOKAHEAD = 2
+
+local nextByStation = {}
+
+local function ensurePicks(stationId, station)
+    local picks = nextByStation[stationId]
+    if not picks then
+        picks = {}
+        nextByStation[stationId] = picks
+    end
+    local afterIndex = #picks > 0 and picks[#picks].index or nil
+    while #picks < LOOKAHEAD do
+        local name, index = MaelstromMusic.Playback.Track.chooseNext(station, afterIndex)
+        if not name then
+            break
+        end
+        table.insert(picks, { name = name, index = index })
+        MaelstromMusic.Playback.Warmup.request(name)
+        afterIndex = index
+    end
+end
+
+local function primeStations()
+    local count = 0
+    local seeded = 0
+    for stationId, station in pairs(MaelstromMusic.Broadcasts or {}) do
+        if seeded >= MAX_SEEDED_STATIONS then
+            break
+        end
+        local before = #(nextByStation[stationId] or {})
+        ensurePicks(stationId, station)
+        local added = #(nextByStation[stationId] or {}) - before
+        if added > 0 then
+            count = count + added
+            seeded = seeded + 1
+        end
+    end
+    if count > 0 then
+        MaelstromMusic.Log.write("pre-warming " .. count .. " track(s) across station(s).")
+    end
+end
 
 local function locate(device, deviceData)
     if deviceData.isVehicleDevice and deviceData:isVehicleDevice() then
@@ -57,10 +101,22 @@ function MaelstromMusic.Playback.Device.playStation(stationId, device)
     end
 
     local station = MaelstromMusic.Broadcasts[stationId]
-    local trackName, trackIndex = MaelstromMusic.Playback.Track.chooseNext(station, existing and existing.trackIndex)
+    ensurePicks(stationId, station)
+    local picks = nextByStation[stationId]
+    local trackName, trackIndex
+    if #picks > 0 then
+        local pick = table.remove(picks, 1)
+        trackName, trackIndex = pick.name, pick.index
+    else
+        trackName, trackIndex = MaelstromMusic.Playback.Track.chooseNext(station, existing and existing.trackIndex)
+    end
     if not trackName then
         return
     end
+
+    ensurePicks(stationId, station)
+
+    MaelstromMusic.Log.write("'" .. station.title .. "' now playing: " .. tostring(station.trackFiles[trackIndex]))
 
     sound:setVolume(deviceData:getDeviceVolume())
     sound:setFadeLevel(station.fade and 0 or 1)
@@ -108,3 +164,5 @@ function MaelstromMusic.Playback.Device.ensurePlaying(device)
 
     MaelstromMusic.Playback.Device.playStation(stationId, device)
 end
+
+Events.OnPreMapLoad.Add(primeStations)

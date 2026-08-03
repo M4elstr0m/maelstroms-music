@@ -55,6 +55,7 @@ local function startTrack(trackName)
         sound:setEmitter(menuEmitter())
         sound:set3D(false)
     end
+    MaelstromMusic.Log.write("main menu theme now playing: " .. tostring(MaelstromMusic.MainMenuTrackFile))
     MaelstromMusic.Safe.call("could not recentre the main menu emitter", function()
         menuEmitter():setPos(0, 0, 0)
     end)

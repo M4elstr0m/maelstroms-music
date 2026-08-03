@@ -4,6 +4,7 @@ require "Safe"
 require "Sound"
 require "Track"
 require "Mood"
+require "Warmup"
 require "VanillaMusic"
 
 MaelstromMusic.Ambience.Director = {}
@@ -14,6 +15,7 @@ local MIN_GAP_TICKS = 1800
 local MAX_GAP_TICKS = 4800
 local FADE_IN_MS = 4000
 local FADE_OUT_MS = 3000
+local LOOKAHEAD = 2
 
 local sound = nil
 local currentId = nil
@@ -24,6 +26,7 @@ local moodCounter = 0
 local takenOver = false
 local gapTicksRemaining = 0
 local radioSuppressed = false
+local nextPicks = {}
 
 local function hasBackgrounds()
     if not MaelstromMusic.Backgrounds then
@@ -70,6 +73,36 @@ local function startNewGap()
     gapTicksRemaining = ZombRand(MIN_GAP_TICKS, MAX_GAP_TICKS + 1)
 end
 
+local function ensurePicks(backgroundId, background)
+    local picks = nextPicks[backgroundId]
+    if not picks then
+        picks = {}
+        nextPicks[backgroundId] = picks
+    end
+    local afterIndex = #picks > 0 and picks[#picks].index or (backgroundId == currentId and currentTrackIndex or nil)
+    while #picks < LOOKAHEAD do
+        local name, index = MaelstromMusic.Playback.Track.chooseNext(background, afterIndex)
+        if not name then
+            break
+        end
+        table.insert(picks, { name = name, index = index })
+        MaelstromMusic.Playback.Warmup.request(name)
+        afterIndex = index
+    end
+end
+
+local function primeMoods()
+    local count = 0
+    for backgroundId, background in pairs(MaelstromMusic.Backgrounds or {}) do
+        local before = #(nextPicks[backgroundId] or {})
+        ensurePicks(backgroundId, background)
+        count = count + (#(nextPicks[backgroundId] or {}) - before)
+    end
+    if count > 0 then
+        MaelstromMusic.Log.write("pre-warming " .. count .. " track(s) across background mood(s).")
+    end
+end
+
 local function playTrack(backgroundId)
     local background = backgroundId and MaelstromMusic.Backgrounds[backgroundId]
     if not background then
@@ -77,7 +110,15 @@ local function playTrack(backgroundId)
         return
     end
 
-    local trackName, trackIndex = MaelstromMusic.Playback.Track.chooseNext(background, currentTrackIndex)
+    ensurePicks(backgroundId, background)
+    local picks = nextPicks[backgroundId]
+    local trackName, trackIndex
+    if #picks > 0 then
+        local pick = table.remove(picks, 1)
+        trackName, trackIndex = pick.name, pick.index
+    else
+        trackName, trackIndex = MaelstromMusic.Playback.Track.chooseNext(background, currentTrackIndex)
+    end
     if not trackName then
         startNewGap()
         return
@@ -85,6 +126,10 @@ local function playTrack(backgroundId)
 
     currentId = backgroundId
     currentTrackIndex = trackIndex
+
+    ensurePicks(backgroundId, background)
+
+    MaelstromMusic.Log.write("background '" .. background.title .. "' now playing: " .. tostring(background.trackFiles[trackIndex]))
 
     if not sound then
         sound = MaelstromMusic.Sound:new()
@@ -140,6 +185,7 @@ function MaelstromMusic.Ambience.Director.onTick()
     if not takenOver then
         takenOver = true
         MaelstromMusic.VanillaMusic.claim(CLAIM_KEY, true)
+        primeMoods()
         startNewGap()
     end
     MaelstromMusic.VanillaMusic.refresh()
@@ -206,4 +252,5 @@ end
 
 Events.OnTick.Add(MaelstromMusic.Ambience.Director.onTick)
 Events.OnRenderTick.Add(checkPlayerGone)
+Events.OnPreMapLoad.Add(primeMoods)
 Events.OnMainMenuEnter.Add(release)

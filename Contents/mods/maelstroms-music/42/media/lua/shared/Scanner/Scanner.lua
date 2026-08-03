@@ -149,6 +149,7 @@ function MaelstromMusic.Scanner.run()
         MaelstromMusic.Broadcasts = MaelstromMusic.Scanner.Manifest.buildStations(stations, tunableIds, frequencyByStationId)
         MaelstromMusic.Backgrounds = MaelstromMusic.Scanner.Manifest.buildBackgrounds(stations, stationIds)
         MaelstromMusic.MainMenuTrack = stations["mainmenu"] and "BroadcastTrack_mainmenu_1" or nil
+        MaelstromMusic.MainMenuTrackFile = stations["mainmenu"] and stations["mainmenu"].trackFiles[1] or nil
 
         local newManifest = MaelstromMusic.Scanner.Manifest.buildText(stations, stationIds)
         local oldManifest = MaelstromMusic.Fs.readFile(MANIFEST_FILE)
