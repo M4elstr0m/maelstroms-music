@@ -79,6 +79,11 @@ function MaelstromMusic.Scanner.Station.tryLoad(modId, baseDir, kind, fileName)
         return nil
     end
 
+    local trackDirs = {}
+    for _ in ipairs(trackFiles) do
+        table.insert(trackDirs, name)
+    end
+
     local stationId = KIND_ID_PREFIX[kind] .. sanitizeIdentifier(name)
     if modId ~= MaelstromMusic.MOD_ID then
         stationId = KIND_ID_PREFIX[kind] .. sanitizeIdentifier(modId) .. "_" .. sanitizeIdentifier(name)
@@ -102,6 +107,8 @@ function MaelstromMusic.Scanner.Station.tryLoad(modId, baseDir, kind, fileName)
         fade = data.fade == true,
         drama = data.drama,
         fixedFrequency = fixedFrequency,
+        mergeTracks = (kind == "radio" or kind == "television") and data.mergeTracks == true,
         trackFiles = trackFiles,
+        trackDirs = trackDirs,
     }
 end

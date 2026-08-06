@@ -23,12 +23,54 @@ local function discoverInDir(modId, baseDir, kind, stations)
     end
 end
 
+local function collectEntries(sources, baseDir, kind)
+    local entries = {}
+    for _, source in ipairs(sources) do
+        for _, fileName in ipairs(MaelstromMusic.Fs.listFilesFrom(source.modId, baseDir)) do
+            local stationId, station = MaelstromMusic.Scanner.Station.tryLoad(source.modId, baseDir, kind, fileName)
+            if stationId then
+                table.insert(entries, { stationId = stationId, station = station })
+            end
+        end
+    end
+    return entries
+end
+
+-- Stations opted into "mergeTracks" and sharing the same title (case-insensitive) are
+-- folded into a single station, tracks from every contributor. First source encountered
+-- (base mod, then addons in modId order) keeps its stationId and wins on shuffle/fade/
+-- frequency for the rest. Stations without mergeTracks never merge with anything, even
+-- if another station happens to share their title.
+local function mergeSharedStations(entries, stations)
+    local primaryIdByTitle = {}
+    for _, entry in ipairs(entries) do
+        local stationId, station = entry.stationId, entry.station
+        if station.mergeTracks then
+            local key = string.lower(station.title)
+            local primaryId = primaryIdByTitle[key]
+            if not primaryId then
+                primaryIdByTitle[key] = stationId
+                stations[stationId] = station
+            else
+                local primary = stations[primaryId]
+                for i, trackFile in ipairs(station.trackFiles) do
+                    table.insert(primary.trackFiles, trackFile)
+                    table.insert(primary.trackDirs, station.trackDirs[i])
+                end
+                MaelstromMusic.Log.write("merged " .. #station.trackFiles .. " track(s) from '" .. station.ownerModId .. "' into shared " .. station.kind .. " '" .. primary.title .. "' (owned by '" .. primary.ownerModId .. "') via mergeTracks.")
+            end
+        else
+            stations[stationId] = station
+        end
+    end
+end
+
 local function getExtension(fileName)
     local ext = string.match(fileName, "%.([%a%d]+)$")
     return ext and string.lower(ext) or nil
 end
 
-local function findMainMenuFile(modId)
+local function findMainMenuFiles(modId)
     local files = {}
     for _, fileName in ipairs(MaelstromMusic.Fs.listFilesFrom(modId, MaelstromMusic.MAINMENU_DIR)) do
         local ext = getExtension(fileName)
@@ -40,14 +82,26 @@ local function findMainMenuFile(modId)
             end
         end
     end
-    if #files == 0 then
-        return nil
-    end
     table.sort(files)
-    if #files > 1 then
-        MaelstromMusic.Log.write("found " .. #files .. " files in " .. MaelstromMusic.MAINMENU_DIR .. " for mod '" .. modId .. "', using '" .. files[1] .. "' and ignoring the rest.")
+    return files
+end
+
+local function collectMainMenuFiles(sources)
+    local trackFiles = {}
+    local contributingSources = 0
+    for _, source in ipairs(sources) do
+        local files = findMainMenuFiles(source.modId)
+        if #files > 0 then
+            contributingSources = contributingSources + 1
+            for _, fileName in ipairs(files) do
+                table.insert(trackFiles, fileName)
+            end
+        end
     end
-    return files[1]
+    if contributingSources > 1 then
+        MaelstromMusic.Log.write("main menu theme: combining " .. #trackFiles .. " track(s) from " .. contributingSources .. " source(s), played in random order.")
+    end
+    return trackFiles
 end
 
 local function buildSources()
@@ -68,10 +122,8 @@ end
 local function discoverStations(sources)
     local stations = {}
 
-    for _, source in ipairs(sources) do
-        discoverInDir(source.modId, MaelstromMusic.RADIOS_DIR, "radio", stations)
-        discoverInDir(source.modId, MaelstromMusic.TVS_DIR, "television", stations)
-    end
+    mergeSharedStations(collectEntries(sources, MaelstromMusic.RADIOS_DIR, "radio"), stations)
+    mergeSharedStations(collectEntries(sources, MaelstromMusic.TVS_DIR, "television"), stations)
 
     local backgroundWinner = nil
     for _, source in ipairs(sources) do
@@ -89,25 +141,17 @@ local function discoverStations(sources)
         end
     end
 
-    local mainMenuWinner = nil
-    for _, source in ipairs(sources) do
-        local fileName = findMainMenuFile(source.modId)
-        if fileName then
-            if not mainMenuWinner then
-                mainMenuWinner = source
-                stations["mainmenu"] = {
-                    ownerModId = source.modId,
-                    rawDir = MaelstromMusic.MAINMENU_DIR,
-                    rawName = "",
-                    kind = "mainmenu",
-                    title = "Main Menu Theme",
-                    shuffle = false,
-                    trackFiles = { fileName },
-                }
-            else
-                MaelstromMusic.Log.write("main menu theme from '" .. source.name .. "' (" .. source.modId .. ") was ignored because '" .. mainMenuWinner.name .. "' (" .. mainMenuWinner.modId .. ") already provides one - only one main menu theme can be active at a time.")
-            end
-        end
+    local mainMenuFiles = collectMainMenuFiles(sources)
+    if #mainMenuFiles > 0 then
+        stations["mainmenu"] = {
+            ownerModId = MaelstromMusic.MOD_ID,
+            rawDir = MaelstromMusic.MAINMENU_DIR,
+            rawName = "",
+            kind = "mainmenu",
+            title = "Main Menu Theme",
+            shuffle = true,
+            trackFiles = mainMenuFiles,
+        }
     end
 
     return stations
@@ -148,8 +192,7 @@ function MaelstromMusic.Scanner.run()
 
         MaelstromMusic.Broadcasts = MaelstromMusic.Scanner.Manifest.buildStations(stations, tunableIds, frequencyByStationId)
         MaelstromMusic.Backgrounds = MaelstromMusic.Scanner.Manifest.buildBackgrounds(stations, stationIds)
-        MaelstromMusic.MainMenuTrack = stations["mainmenu"] and "BroadcastTrack_mainmenu_1" or nil
-        MaelstromMusic.MainMenuTrackFile = stations["mainmenu"] and stations["mainmenu"].trackFiles[1] or nil
+        MaelstromMusic.MainMenuStation = stations["mainmenu"] and MaelstromMusic.Scanner.Manifest.buildMainMenu(stations["mainmenu"]) or nil
 
         local newManifest = MaelstromMusic.Scanner.Manifest.buildText(stations, stationIds)
         local oldManifest = MaelstromMusic.Fs.readFile(MANIFEST_FILE)
@@ -173,7 +216,7 @@ function MaelstromMusic.Scanner.run()
         local count = 0
         for _ in pairs(MaelstromMusic.Broadcasts) do count = count + 1 end
         for _ in pairs(MaelstromMusic.Backgrounds) do count = count + 1 end
-        if MaelstromMusic.MainMenuTrack then count = count + 1 end
+        if MaelstromMusic.MainMenuStation then count = count + 1 end
         MaelstromMusic.Log.write(count .. " station(s) loaded.")
 
         MaelstromMusic.ScanComplete = true

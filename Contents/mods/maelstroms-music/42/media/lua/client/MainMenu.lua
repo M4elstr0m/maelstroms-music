@@ -3,6 +3,7 @@ require "Log"
 require "Safe"
 require "Sound"
 require "VanillaMusic"
+require "Track"
 
 MaelstromMusic.MainMenu = {}
 
@@ -11,17 +12,32 @@ local FADE_IN_MS = 3000
 local FADE_OUT_MS = 2500
 local FADE_OUT_TIMEOUT_MS = FADE_OUT_MS + 1500
 local RESTART_GRACE_MS = 1500
+local TRACK_GAP_MS = 10000
 
 local sound = nil
 local active = false
 local loadedTrack = nil
+local currentIndex = nil
 local fadingOut = false
-local pendingTrack = nil
 local fadeDeadlineAt = 0
 local startedAt = 0
+local nextTrackAt = 0
 
 local function menuEmitter()
     return getSoundManager():getUIEmitter()
+end
+
+local function hasMainMenuTracks()
+    local station = MaelstromMusic.MainMenuStation
+    return station ~= nil and #station.tracks > 0
+end
+
+local function pickNextTrack()
+    local station = MaelstromMusic.MainMenuStation
+    if not station then
+        return nil, nil
+    end
+    return MaelstromMusic.Playback.Track.chooseNext(station, currentIndex)
 end
 
 local function updateClaim()
@@ -45,17 +61,21 @@ local function discardSound()
     sound = nil
     loadedTrack = nil
     fadingOut = false
-    pendingTrack = nil
     updateClaim()
 end
 
-local function startTrack(trackName)
+local function startTrack(trackName, index)
+    if not trackName then
+        return
+    end
     if not sound then
         sound = MaelstromMusic.Sound:new()
         sound:setEmitter(menuEmitter())
         sound:set3D(false)
     end
-    MaelstromMusic.Log.write("main menu theme now playing: " .. tostring(MaelstromMusic.MainMenuTrackFile))
+    local station = MaelstromMusic.MainMenuStation
+    local trackFile = station and index and station.trackFiles[index]
+    MaelstromMusic.Log.write("main menu theme now playing: " .. tostring(trackFile))
     MaelstromMusic.Safe.call("could not recentre the main menu emitter", function()
         menuEmitter():setPos(0, 0, 0)
     end)
@@ -64,11 +84,12 @@ local function startTrack(trackName)
     sound:play(trackName)
     sound:fadeTo(1, FADE_IN_MS)
     loadedTrack = trackName
+    currentIndex = index
     startedAt = getTimestampMs()
     updateClaim()
 end
 
-local function beginSwap(nextTrack)
+local function beginSwap()
     local isPlaying = false
     MaelstromMusic.Safe.call("could not read the main menu theme playback state", function()
         isPlaying = sound and sound:isPlaying()
@@ -76,23 +97,16 @@ local function beginSwap(nextTrack)
 
     if not isPlaying then
         discardSound()
-        if nextTrack then
-            startTrack(nextTrack)
-        end
         return
     end
 
     fadingOut = true
-    pendingTrack = nextTrack
     fadeDeadlineAt = getTimestampMs() + FADE_OUT_TIMEOUT_MS
     local started = MaelstromMusic.Safe.call("could not start fading out the main menu theme", function()
         sound:fadeOutAndStop(FADE_OUT_MS)
     end)
     if not started then
         discardSound()
-        if nextTrack then
-            startTrack(nextTrack)
-        end
     end
 end
 
@@ -102,11 +116,11 @@ end
 
 local function onGameStart()
     active = false
-    beginSwap(nil)
+    beginSwap()
 end
 
 local function onPreMapLoad()
-    if active and (loadedTrack or MaelstromMusic.MainMenuTrack) then
+    if active and (loadedTrack or hasMainMenuTracks()) then
         holdMusicState()
     end
 end
@@ -121,14 +135,10 @@ local function onRenderTick()
         end)
 
         if (ok and done) or getTimestampMs() > fadeDeadlineAt then
-            local nextTrack = pendingTrack
             discardSound()
-            if nextTrack and active then
-                startTrack(nextTrack)
-            end
         end
 
-        if active and (loadedTrack or MaelstromMusic.MainMenuTrack) then
+        if active and (loadedTrack or hasMainMenuTracks()) then
             holdMusicState()
         end
         return
@@ -138,17 +148,14 @@ local function onRenderTick()
         return
     end
 
-    local desired = MaelstromMusic.MainMenuTrack
-    if not (loadedTrack or desired) then
+    if not (loadedTrack or hasMainMenuTracks()) then
         return
     end
     holdMusicState()
 
-    if desired ~= loadedTrack then
-        if loadedTrack then
-            beginSwap(desired)
-        else
-            startTrack(desired)
+    if not loadedTrack then
+        if getTimestampMs() >= nextTrackAt then
+            startTrack(pickNextTrack())
         end
         return
     end
@@ -157,7 +164,8 @@ local function onRenderTick()
     sound:setVolume(MaelstromMusic.VanillaMusic.optionVolume())
 
     if getTimestampMs() - startedAt > RESTART_GRACE_MS and not sound:isPlaying() then
-        startTrack(loadedTrack)
+        discardSound()
+        nextTrackAt = getTimestampMs() + TRACK_GAP_MS
     end
 end
 

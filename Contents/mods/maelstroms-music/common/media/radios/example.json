@@ -1,1 +1,6 @@
-{ "title": "Example Radio", "shuffle": true, "fade": false }
+{
+  "title": "Example Radio",
+  "shuffle": true,
+  "fade": false,
+  "mergeTracks": true
+}

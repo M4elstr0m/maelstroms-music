@@ -84,12 +84,13 @@ Radio stations and TV channels use the exact same convention: radio stations liv
    }
    ```
 
-   | Field       | Type    | Required | Default | Description                                                                                                                                                            |
-   | ----------- | ------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | `title`     | string  | Yes      | None    | Name shown in-game.                                                                                                                                                    |
-   | `shuffle`   | boolean | No       | `false` | `false` plays tracks in order, looping back to the start. `true` plays them in random order.                                                                           |
-   | `fade`      | boolean | No       | `false` | Ease each track in over a couple of seconds instead of starting at full volume. Nice for music, less so for talk radio where you don't want the first words swallowed. |
-   | `frequency` | number  | No       | None    | Pin the station to an exact frequency (in MHz, e.g. `95.4`) instead of letting the mod assign one automatically. See [Manual Frequencies](#manual-frequencies) below.  |
+   | Field         | Type    | Required | Default | Description                                                                                                                                                                                                                                                                                                                                        |
+   | ------------- | ------- | -------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `title`       | string  | Yes      | None    | Name shown in-game.                                                                                                                                                                                                                                                                                                                                |
+   | `shuffle`     | boolean | No       | `false` | `false` plays tracks in order, looping back to the start. `true` plays them in random order.                                                                                                                                                                                                                                                       |
+   | `fade`        | boolean | No       | `false` | Ease each track in over a couple of seconds instead of starting at full volume. Nice for music, less so for talk radio where you don't want the first words swallowed.                                                                                                                                                                             |
+   | `frequency`   | number  | No       | None    | Pin the station to an exact frequency (in MHz, e.g. `95.4`) instead of letting the mod assign one automatically. See [Manual Frequencies](#manual-frequencies) below.                                                                                                                                                                              |
+   | `mergeTracks` | boolean | No       | `false` | If `true`, this station shares its tracks with any other active station (from this mod or an addon) that also has `mergeTracks: true` and the exact same `title` (case-insensitive). Useful for addons that add more music to an existing station instead of creating a new one. See [Addon Guide](ADDONS.md#sharing-tracks-with-another-station). |
 
 2. Create a folder with the **exact same name** as the JSON file (without `.json` extension) next to it: `common/media/radios/example/`.
 
@@ -173,13 +174,15 @@ Background tracks always ease in and out rather than cutting, so switching moods
 
 ## Main Menu Theme
 
-Replace the music that plays on the main menu with a single track of your own. No JSON needed, just the file:
+Replace the music that plays on the main menu with your own. No JSON needed, just the file(s):
 
 ```txt
 common/media/mainmenu/My Theme.mp3
 ```
 
-That's it. Drop exactly one `.mp3`, `.ogg`, or `.wav` file in `common/media/mainmenu/`, and it replaces the vanilla main menu music.
+That's it. Drop a `.mp3`, `.ogg`, or `.wav` file in `common/media/mainmenu/`, and it replaces the vanilla main menu music.
+
+You can drop in more than one file. With two or more, they're played in random order (never the same one twice in a row) for as long as the player sits at the main menu, instead of just looping the one track. Either way, there's a 10-second pause of silence between one track ending and the next one starting - even with just a single track, so it doesn't loop back-to-back with no gap.
 
 ## Addon Mods
 
@@ -203,7 +206,8 @@ At boot, Maelstrom's Music scans every other active mod that:
 Any mod meeting both conditions gets scanned using the exact same `common/media/radios|televisions|backgrounds|mainmenu` convention described above.
 
 - **Radio stations and TV channels always merge.** Every active addon's stations are added alongside the base mod's own and everyone else's, with frequencies assigned automatically across everything combined.
-- **Background soundtrack and main menu theme are exclusive.** Only one active source supplies each. The base mod's own `backgrounds/`/`mainmenu/` wins if the player set one up themselves; otherwise the first addon (alphabetically by mod ID) wins, and every other contender is skipped with a clear line in the console log explaining why.
+- **Main menu themes always merge.** Every active source's `mainmenu/` track(s) are pooled together and played in random order, same as if they'd all been dropped in one mod's folder.
+- **Background soundtrack is exclusive.** Only one active source supplies it - mixing two unrelated background soundtracks together wouldn't sound intentional. The base mod's own `backgrounds/` wins if the player set one up themselves; otherwise the first addon (alphabetically by mod ID) wins, and every other contender is skipped with a clear line in the console log explaining why.
 
 > [!CAUTION]
 > Project Zomboid resolves audio files by relative path across *all* active mods. If two addons (or an addon and the base mod's own `example` station) use an identically named station folder, one can silently shadow the other's audio. Use a distinctive folder name for your stations.
@@ -220,8 +224,10 @@ See [ADDONS.md](ADDONS.md) for the full addon creation guide.
 - [x] Steam Workshop addon system - see [Addon Mods](#addon-mods)
 - [x] Optimize loading time (gradual loading, can't do better I think for now)
 - [x] Improve Background music transitions & moods (drama override & replay on skip)
-- [ ] Add delay between Main Menu music replays & allow multiple main menu music
+- [x] Allow multiple addons to share the same radio / TV station with the same config
+- [x] Add delay between Main Menu music replays & allow multiple main menu music
 - [ ] Display music title when it starts playing on radio
+- [ ] Music VHS? (vanilla integrated)
 
 ## Credits
 

@@ -28,7 +28,8 @@ function MaelstromMusic.Scanner.Manifest.buildGeneratedScript(stations, stationI
         local station = stations[stationId]
         for index, trackFile in ipairs(station.trackFiles) do
             local soundName = "BroadcastTrack_" .. stationId .. "_" .. index
-            local filePath = station.rawName ~= "" and (station.rawDir .. "/" .. station.rawName .. "/" .. trackFile) or (station.rawDir .. "/" .. trackFile)
+            local rawName = station.trackDirs and station.trackDirs[index] or station.rawName
+            local filePath = rawName ~= "" and (station.rawDir .. "/" .. rawName .. "/" .. trackFile) or (station.rawDir .. "/" .. trackFile)
             table.insert(parts, "\tsound " .. soundName .. "\n" ..
                 "\t{\n" ..
                 "\t\tcategory = Maelstrom Music,\n" ..
@@ -69,6 +70,19 @@ function MaelstromMusic.Scanner.Manifest.buildStations(stations, stationIds, fre
         end
     end
     return result
+end
+
+function MaelstromMusic.Scanner.Manifest.buildMainMenu(station)
+    local trackNames = {}
+    for index, _ in ipairs(station.trackFiles) do
+        table.insert(trackNames, "BroadcastTrack_mainmenu_" .. index)
+    end
+    return {
+        title = station.title,
+        shuffle = station.shuffle,
+        tracks = trackNames,
+        trackFiles = station.trackFiles,
+    }
 end
 
 function MaelstromMusic.Scanner.Manifest.buildBackgrounds(stations, stationIds)
