@@ -41,7 +41,7 @@ local function pickNextTrack()
 end
 
 local function updateClaim()
-    MaelstromMusic.VanillaMusic.claim(CLAIM_KEY, loadedTrack ~= nil)
+    MaelstromMusic.VanillaMusic.claim(CLAIM_KEY, active and hasMainMenuTracks())
     MaelstromMusic.VanillaMusic.refresh()
 end
 
