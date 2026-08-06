@@ -1,0 +1,78 @@
+version=1
+id=3775149796
+title=Maelstrom's Music [B42.20]
+description=[h1]Maelstrom's Music[/h1]
+description=[i]Because the apocalypse deserves a soundtrack.[/i]
+description=
+description=A Project Zomboid mod that lets you turn your own MP3, OGG, or WAV files into fully tunable radio stations, TV channels, an adaptive background soundtrack, or a custom main menu theme.
+description=[b]No complex audio editing, no extra UIs, no sound-bank hacking: just drop audio files in your mod folder or install an addon.[/b] Designed to merge a lot of music related features in a single mod.
+description=
+description=[b][url=https://github.com/M4elstr0m/maelstroms-music]Github Link 🔗[/url][/b]
+description=[b]If you like my work[/b], please support it by liking and rewarding this item AND [b]starring my [url=https://github.com/M4elstr0m/maelstroms-music]Github repository[/url][/b] ⭐
+description=
+description=[hr][/hr]
+description=
+description=[h2]Features[/h2]
+description=One mod to rule them all. It should basically gather every music mods in one.
+description=Without any addon installed, this mod only adds on his own a sample radio station with 4 free-of-use jazzy music.
+description=
+description=[list]
+description=[*][b]Unlimited Radio & TV Stations:[/b] Add as many as you like! Frequency numbers are randomly spread out so large music libraries won't clump together on lower channels.
+description=[*][b]Adaptive Background OST:[/b] Replaces vanilla background music with your own tracks mapped to the game's dynamic 0–10 "drama" scale (reacts live to zombie threats).
+description=[*][b]Custom Main Menu Theme:[/b] Seamlessly carries your custom menu music through the loading screen into gameplay.
+description=[*][b]Distance-Based Volume:[/b] Handhelds, car stereos, and stationary TVs naturally fade with distance using vanilla audio physics.
+description=[*][b]Zero Engineering Needed (when using addons):[/b] Drop your audio files into a folder alongside a tiny JSON configuration file.
+description=[/list]
+description=
+description=[hr][/hr]
+description=
+description=[h2]Compatibility & Save Games[/h2]
+description=[list]
+description=[*][b]Save Games:[/b] Safe to add or remove mid-save.
+description=[*][b]Multiplayer:[/b] Fully compatible (Build 42.20+). [i]Note: Track selection is client-side, so different players tuned into the same station may hear different songs at the same moment.[/i]
+description=[*][b]Other Mods:[/b] Zero vanilla soundbank files are modified, minimizing mod conflicts.
+description=[/list]
+description=
+description=Please report your bugs & suggestions on Github (see above link).
+description=
+description=[hr][/hr]
+description=
+description=[h2]Quick Setup Guide[/h2]
+description=Simply download a Maelstrom's Music Addon (available in Steam Workshop) and enable the concerned mods.
+description=[b]Or[/b] (if you want to add your own music manually) please refer to the project's [url=https://github.com/M4elstr0m/maelstroms-music]Github[/url] page for full documentation.
+description=
+description=[hr][/hr]
+description=
+description=[h2]Addon Support for Mod Creators[/h2]
+description=Creating a music pack mod for Maelstrom's Music?
+description=Please refer to the project's [b][url=https://github.com/M4elstr0m/maelstroms-music]Github[/url][/b] page for full documentation.
+description=
+description=[hr][/hr]
+description=
+description=[h2]Roadmap[/h2]
+description=[list]
+description=[*]✅ v1.0.0 - Steam Workshop addon system - see above
+description=[*]✅ v1.0.2 - Optimize loading time, removing start-up lags (gradual loading, can't do better I think for now)
+description=[*]✅ v1.0.2 - Improve Background music transitions & moods (drama override & replay on skip)
+description=[*]✅ v1.0.3 - Allow multiple addons to share the same radio / TV station with the same config
+description=[*]✅ v1.0.3 - Add delay between Main Menu music replays & allow multiple main menu music
+description=[*]⬜ Display music title when it starts playing on radio
+description=[*]⬜ Music VHS? (vanilla integrated)
+description=
+description=[/list]
+description=
+description=[hr][/hr]
+description=
+description=[h2]Credits[/h2]
+description=[list]
+description=[*]Dynamic channel & fading logic inspired by [b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3631572046]TrueMusicRadio[/url][/b].
+description=[*]Background drama music concept inspired by [b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=2864373983]The Last Of Us Peace Music[/url][/b].
+description=[*]Sample radio tracks provided by [b]VJazz Relaxing[/b] (Pixabay).
+description=[/list]
+description=
+description=[i]Released under MIT License (Non-Commercial Variant).[/i]
+description=[i]Created by [b][url=https://github.com/M4elstr0m]M4elstr0m[/url][/b].[/i]
+description=
+description=[url=https://discord.gg/SReMnbV4V7][img]https://raw.githubusercontent.com/Chuckleberry-Finn/chuckImages/main/PZmodCommBanner3.png[/img][/url]
+tags=Build 42;Audio;Framework;Multiplayer;QoL;WIP
+visibility=public
