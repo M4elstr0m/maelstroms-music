@@ -5,6 +5,7 @@ MaelstromMusic.TVS_DIR = "media/televisions"
 MaelstromMusic.BACKGROUNDS_DIR = "media/backgrounds"
 MaelstromMusic.MAINMENU_DIR = "media/mainmenu"
 MaelstromMusic.FREQ_STEP = 200
+MaelstromMusic.AUDIOFILE_EXTENSIONS = { mp3 = true, ogg = true, wav = true, flac = true }
 MaelstromMusic.Scanner = MaelstromMusic.Scanner or {}
 MaelstromMusic.Playback = MaelstromMusic.Playback or {}
 MaelstromMusic.Ambience = MaelstromMusic.Ambience or {}

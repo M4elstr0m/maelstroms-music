@@ -9,7 +9,6 @@ require "AddonDiscovery"
 
 local MANIFEST_FILE = MaelstromMusic.RADIOS_DIR .. "/_radios_manifest.txt"
 local GENERATED_SCRIPT_FILE = "media/scripts/GeneratedRadios.txt"
-local MAINMENU_EXTENSIONS = { mp3 = true, ogg = true, wav = true }
 
 if not MaelstromMusic.Broadcasts then MaelstromMusic.Broadcasts = {} end
 if not MaelstromMusic.Backgrounds then MaelstromMusic.Backgrounds = {} end
@@ -74,7 +73,7 @@ local function findMainMenuFiles(modId)
     local files = {}
     for _, fileName in ipairs(MaelstromMusic.Fs.listFilesFrom(modId, MaelstromMusic.MAINMENU_DIR)) do
         local ext = getExtension(fileName)
-        if ext and MAINMENU_EXTENSIONS[ext] then
+        if ext and MaelstromMusic.AUDIOFILE_EXTENSIONS[ext] then
             if string.find(fileName, ",", 1, true) then
                 MaelstromMusic.Log.write("skipping '" .. fileName .. "' - a comma in the filename breaks Project Zomboid's sound script parser. Rename the file to remove the comma.")
             else

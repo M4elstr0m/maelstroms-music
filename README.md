@@ -26,7 +26,7 @@
 ## <p align="center">Please [star](https://github.com/M4elstr0m/maelstroms-music/stargazers) this repository if you find it useful ⭐</p>
 
 <h6>
-A Project Zomboid mod that turns your own mp3/ogg/wav files into fully tunable radio stations, TV channels, an adaptive background soundtrack, and a custom main menu theme.
+A Project Zomboid mod that turns your own mp3/ogg/flac/wav files into fully tunable radio stations, TV channels, an adaptive background soundtrack, and a custom main menu theme.
 
 No strange audio editing, no additional UIs, no sound-bank hacking, just audio files in mod folders.
 </h6>
@@ -103,7 +103,7 @@ Radio stations and TV channels use the exact same convention: radio stations liv
    common/media/radios/example/Ratatouille - VJazz Relaxing.mp3
    ```
 
-   `.mp3`, `.ogg` and `.wav` all work.
+   `.mp3`, `.ogg`, `.flac` and `.wav` all work.
 
 > [!CAUTION]
 > **Track filenames must not contain a comma (`,`).** This applies everywhere in this mod: radios, TV channels, backgrounds, and the main menu theme. A comma breaks Project Zomboid's own sound script parser and silently drops that track entirely. If your file came from somewhere with a name like `Song Title, Pt. 2.mp3`, just remove the comma.
@@ -180,7 +180,7 @@ Replace the music that plays on the main menu with your own. No JSON needed, jus
 common/media/mainmenu/My Theme.mp3
 ```
 
-That's it. Drop a `.mp3`, `.ogg`, or `.wav` file in `common/media/mainmenu/`, and it replaces the vanilla main menu music.
+That's it. Drop a `.mp3`, `.ogg`, `.flac`, or `.wav` file in `common/media/mainmenu/`, and it replaces the vanilla main menu music.
 
 You can drop in more than one file. With two or more, they're played in random order (never the same one twice in a row) for as long as the player sits at the main menu, instead of just looping the one track. Either way, there's a 10-second pause of silence between one track ending and the next one starting - even with just a single track, so it doesn't loop back-to-back with no gap.
 

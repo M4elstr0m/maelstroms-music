@@ -5,8 +5,6 @@ require "Json"
 
 MaelstromMusic.Scanner.Station = {}
 
-local TRACK_EXTENSIONS = { mp3 = true, ogg = true, wav = true }
-
 local KIND_ID_PREFIX = {
     radio = "radio_",
     television = "tv_",
@@ -38,7 +36,7 @@ local function collectTrackFiles(modId, baseDir, name)
     local trackFiles = {}
     for _, trackFile in ipairs(MaelstromMusic.Fs.listFilesFrom(modId, baseDir .. "/" .. name)) do
         local ext = getExtension(trackFile)
-        if ext and TRACK_EXTENSIONS[ext] then
+        if ext and MaelstromMusic.AUDIOFILE_EXTENSIONS[ext] then
             if string.find(trackFile, ",", 1, true) then
                 MaelstromMusic.Log.write("skipping '" .. trackFile .. "' - a comma in the filename breaks Project Zomboid's sound script parser. Rename the file to remove the comma.")
             else
@@ -75,7 +73,7 @@ function MaelstromMusic.Scanner.Station.tryLoad(modId, baseDir, kind, fileName)
 
     local trackFiles = collectTrackFiles(modId, baseDir, name)
     if #trackFiles == 0 then
-        MaelstromMusic.Log.write("'" .. name .. "' in mod '" .. modId .. "' has an info file but no playable tracks (mp3/ogg/wav) in " .. baseDir .. "/" .. name .. ", skipping.")
+        MaelstromMusic.Log.write("'" .. name .. "' in mod '" .. modId .. "' has an info file but no playable tracks (mp3/ogg/wav/flac) in " .. baseDir .. "/" .. name .. ", skipping.")
         return nil
     end
 
