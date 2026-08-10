@@ -47,6 +47,67 @@ function MaelstromMusic.Scanner.Manifest.buildGeneratedScript(stations, stationI
     return table.concat(parts)
 end
 
+-- forcedNext[beforeIndex] = afterIndex drives the forced hand-off itself. gated[index] marks
+-- a track as an "after" target - those never come up on their own, only via their forced
+-- predecessor(s), even in a chain (a track can be both a "before" and an "after" at once).
+local function buildSequenceInfo(station)
+    if not station.sequences then
+        return nil, nil
+    end
+    local indexByFile = {}
+    for index, trackFile in ipairs(station.trackFiles) do
+        if not indexByFile[trackFile] then
+            indexByFile[trackFile] = index
+        end
+    end
+    local forcedNext = nil
+    local gated = nil
+    for _, seq in ipairs(station.sequences) do
+        local beforeIndex = indexByFile[seq.before]
+        local afterIndex = indexByFile[seq.after]
+        if beforeIndex and afterIndex then
+            forcedNext = forcedNext or {}
+            if forcedNext[beforeIndex] and forcedNext[beforeIndex] ~= afterIndex then
+                MaelstromMusic.Log.write("'" .. station.title .. "' has more than one \"sequences\" entry for '" .. seq.before .. "' - keeping the last one.")
+            end
+            forcedNext[beforeIndex] = afterIndex
+            gated = gated or {}
+            gated[afterIndex] = true
+        else
+            MaelstromMusic.Log.write("'" .. station.title .. "' has a \"sequences\" entry referencing a track that isn't in this station ('" .. seq.before .. "' -> '" .. seq.after .. "'), skipping it.")
+        end
+    end
+    if gated then
+        local gatedCount = 0
+        for _ in pairs(gated) do
+            gatedCount = gatedCount + 1
+        end
+        if gatedCount >= #station.trackFiles then
+            MaelstromMusic.Log.write("'" .. station.title .. "' has every track gated by \"sequences\" - nothing can ever play, since at least one track must be reachable on its own.")
+        end
+    end
+    if forcedNext then
+        local reported = {}
+        for start, _ in pairs(forcedNext) do
+            if not reported[start] then
+                local visited = {}
+                local current = start
+                while current and forcedNext[current] and not visited[current] do
+                    visited[current] = true
+                    current = forcedNext[current]
+                end
+                if current and visited[current] then
+                    for node in pairs(visited) do
+                        reported[node] = true
+                    end
+                    MaelstromMusic.Log.write("'" .. station.title .. "' has a \"sequences\" cycle (some chain of \"before\"/\"after\" entries loops back on itself) - once entered it plays forever and every other track becomes unreachable. Check your chain for a loop.")
+                end
+            end
+        end
+    end
+    return forcedNext, gated
+end
+
 function MaelstromMusic.Scanner.Manifest.buildStations(stations, stationIds, frequencyByStationId)
     local result = {}
     for _, stationId in ipairs(stationIds) do
@@ -57,6 +118,7 @@ function MaelstromMusic.Scanner.Manifest.buildStations(stations, stationIds, fre
             for index, _ in ipairs(station.trackFiles) do
                 table.insert(trackNames, "BroadcastTrack_" .. stationId .. "_" .. index)
             end
+            local forcedNext, gated = buildSequenceInfo(station)
             result[stationId] = {
                 title = station.title,
                 shuffle = station.shuffle,
@@ -66,6 +128,8 @@ function MaelstromMusic.Scanner.Manifest.buildStations(stations, stationIds, fre
                 trackFiles = station.trackFiles,
                 frequency = frequency,
                 autoPreset = not station.fixedFrequency,
+                forcedNext = forcedNext,
+                gated = gated,
             }
         end
     end

@@ -95,6 +95,20 @@ function MaelstromMusic.Scanner.Station.tryLoad(modId, baseDir, kind, fileName)
         end
     end
 
+    local sequences = nil
+    if kind == "radio" or kind == "television" then
+        if type(data.sequences) == "table" then
+            sequences = {}
+            for _, entry in ipairs(data.sequences) do
+                if type(entry) == "table" and type(entry.before) == "string" and type(entry.after) == "string" and entry.before ~= entry.after then
+                    table.insert(sequences, { before = entry.before, after = entry.after })
+                else
+                    MaelstromMusic.Log.write(baseDir .. "/" .. fileName .. " in mod '" .. modId .. "' has an invalid \"sequences\" entry (needs distinct string \"before\" and \"after\" filenames), skipping that entry.")
+                end
+            end
+        end
+    end
+
     return stationId, {
         ownerModId = modId,
         rawDir = baseDir,
@@ -108,5 +122,6 @@ function MaelstromMusic.Scanner.Station.tryLoad(modId, baseDir, kind, fileName)
         mergeTracks = (kind == "radio" or kind == "television") and data.mergeTracks == true,
         trackFiles = trackFiles,
         trackDirs = trackDirs,
+        sequences = sequences,
     }
 end

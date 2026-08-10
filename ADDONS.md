@@ -40,7 +40,7 @@ Maelstrom's Music scans every currently active Workshop mod at boot. Any mod tha
    - `common/media/backgrounds/<Name>.json` + `common/media/backgrounds/<Name>/` for a background soundtrack
    - `common/media/mainmenu/<file>` for a main menu theme
 
-   Same field names (`title`, `shuffle`, `fade`, `drama`, `frequency`, `mergeTracks`), same rules (comma-free filenames, JSON sitting next to the folder rather than inside it, `.mp3`/`.ogg`/`.flac`/`.wav` only).
+   Same field names (`title`, `shuffle`, `fade`, `drama`, `frequency`, `mergeTracks`, `sequences`), same rules (comma-free filenames, JSON sitting next to the folder rather than inside it, `.mp3`/`.ogg`/`.flac`/`.wav` only).
 
 ## What merges, and what doesn't
 
@@ -65,6 +65,8 @@ If you actually want your addon to add more tracks to an existing station (yours
 Every active station with `mergeTracks: true` and that title (radio only merges with radio, TV only with TV - never with each other) is folded into one station with every contributor's tracks combined, on one shared frequency. Whichever source is found first (the base mod, then addons in mod ID order) keeps its own station ID and its own `shuffle`/`fade`/`frequency` settings for the merged station - if your JSON's settings differ from theirs, yours are simply ignored for the merge, only your tracks are used. Only `mergeTracks: true` stations are ever affected by this - if the field is missing or `false`, your station never merges with anything, regardless of what its title is.
 
 Merging is decided purely by the `title` field - your station's JSON filename and folder should still be different from theirs. See [Avoiding folder-name collisions](#avoiding-folder-name-collisions) below: reusing someone else's folder name doesn't help the merge and can make your files, or theirs, resolve to the wrong audio.
+
+[`sequences`](README.md#forcing-track-order) entries merge too - every contributor's `sequences` list is combined into the shared station, so your addon can force one of your own tracks to always play right after (or force one of *their* tracks to play right after one of *yours*) once merged. Filenames are still matched exactly, so this only works against tracks that actually end up in the merged station.
 
 ## Avoiding folder-name collisions
 

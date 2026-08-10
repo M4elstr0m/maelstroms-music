@@ -91,6 +91,7 @@ Radio stations and TV channels use the exact same convention: radio stations liv
    | `fade`        | boolean | No       | `false` | Ease each track in over a couple of seconds instead of starting at full volume. Nice for music, less so for talk radio where you don't want the first words swallowed.                                                                                                                                                                             |
    | `frequency`   | number  | No       | None    | Pin the station to an exact frequency (in MHz, e.g. `95.4`) instead of letting the mod assign one automatically. See [Manual Frequencies](#manual-frequencies) below.                                                                                                                                                                              |
    | `mergeTracks` | boolean | No       | `false` | If `true`, this station shares its tracks with any other active station (from this mod or an addon) that also has `mergeTracks: true` and the exact same `title` (case-insensitive). Useful for addons that add more music to an existing station instead of creating a new one. See [Addon Guide](ADDONS.md#sharing-tracks-with-another-station). |
+   | `sequences`   | array   | No       | None    | Force specific tracks to always play right after one another, even with `shuffle: true`. See [Forcing Track Order](#forcing-track-order) below.                                                                                                                                                                                                    |
 
 2. Create a folder with the **exact same name** as the JSON file (without `.json` extension) next to it: `common/media/radios/example/`.
 
@@ -107,6 +108,44 @@ Radio stations and TV channels use the exact same convention: radio stations liv
 
 > [!CAUTION]
 > **Track filenames must not contain a comma (`,`).** This applies everywhere in this mod: radios, TV channels, backgrounds, and the main menu theme. A comma breaks Project Zomboid's own sound script parser and silently drops that track entirely. If your file came from somewhere with a name like `Song Title, Pt. 2.mp3`, just remove the comma.
+
+### Forcing Track Order
+
+Radio stations and TV channels only - not backgrounds or the main menu theme. Normally, with `shuffle: true`, every track has an equal random chance of playing next. If you want one specific track to always play right after another - say, a short jingle or advert that announces the song coming up next - add a `sequences` list to the station's JSON:
+
+```json
+{
+    "title": "Example Radio",
+    "shuffle": true,
+    "sequences": [
+        { "before": "Station Jingle.mp3", "after": "Big Hit Single.mp3" }
+    ]
+}
+```
+
+Whenever `"Station Jingle.mp3"` plays, the very next track is always `"Big Hit Single.mp3"` - shuffle is skipped for just that one step. Any track named as an `"after"` becomes exclusive to that hand-off: `"Big Hit Single.mp3"` will **only** ever play as a result of `"Station Jingle.mp3"` playing first, never picked on its own by shuffle or the normal track order. Filenames must match exactly, including the extension.
+
+Multiple tracks can lead into the same one - e.g. two different jingles that both announce the same song:
+
+```json
+"sequences": [
+    { "before": "Jingle A.mp3", "after": "Big Hit Single.mp3" },
+    { "before": "Jingle B.mp3", "after": "Big Hit Single.mp3" }
+]
+```
+
+And a track can be both an `"after"` and a `"before"` at once, to chain more than two tracks together:
+
+```json
+"sequences": [
+    { "before": "Jingle A.mp3", "after": "Big Hit Single.mp3" },
+    { "before": "Big Hit Single.mp3", "after": "Outro A.mp3" }
+]
+```
+
+`Jingle A.mp3` (pickable normally) always leads into `Big Hit Single.mp3`, which always leads into `Outro A.mp3` - the whole chain plays in order once triggered. A track can only ever be given **one** forced next track (you can't split `"Big Hit Single.mp3"` two different ways), but any number of *other* tracks can lead into it.
+
+Pressing "Tune In" to skip a track always advances exactly one step through this same chain, so it can't skip over or bypass a forced hand-off - if the track that just played has a forced next track, that's guaranteed to be what plays next, whether the change came from a track naturally ending or from Tune In.
 
 ### Usage
 
@@ -227,9 +266,9 @@ See [ADDONS.md](ADDONS.md) for the full addon creation guide.
 - [x] Allow multiple addons to share the same radio / TV station with the same config
 - [x] Add delay between Main Menu music replays & allow multiple main menu music
 - [x] Comptatibility with .flac files
-- [ ] Allow ordering even with shuffle=true
+- [x] Allow ordering even with shuffle=true
+- [ ] Music VHS & CDs (vanilla integrated)
 - [ ] Display music title when it starts playing on radio
-- [ ] Music VHS? (vanilla integrated)
 
 ## Credits
 

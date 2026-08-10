@@ -56,6 +56,12 @@ local function mergeSharedStations(entries, stations)
                     table.insert(primary.trackFiles, trackFile)
                     table.insert(primary.trackDirs, station.trackDirs[i])
                 end
+                if station.sequences then
+                    primary.sequences = primary.sequences or {}
+                    for _, seq in ipairs(station.sequences) do
+                        table.insert(primary.sequences, seq)
+                    end
+                end
                 MaelstromMusic.Log.write("merged " .. #station.trackFiles .. " track(s) from '" .. station.ownerModId .. "' into shared " .. station.kind .. " '" .. primary.title .. "' (owned by '" .. primary.ownerModId .. "') via mergeTracks.")
             end
         else

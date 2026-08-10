@@ -59,7 +59,7 @@ description=[*]✅ v1.0.2 - Improve Background music transitions & moods (drama 
 description=[*]✅ v1.0.3 - Allow multiple addons to share the same radio / TV station with the same config
 description=[*]✅ v1.0.3 - Add delay between Main Menu music replays & allow multiple main menu music
 description=[*]✅ v1.0.6 - Compatibility with .flac files
-description=[*]⬜ v1.0.7 - Allow ordering even with shuffle=true
+description=[*]✅ v1.0.7 - Allow ordering even with shuffle=true
 description=[*]⬜ Music VHS and CDs (vanilla integrated)
 description=[*]⬜ Display music title when it starts playing on radio
 description=
