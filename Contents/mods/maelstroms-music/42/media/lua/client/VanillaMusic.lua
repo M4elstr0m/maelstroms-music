@@ -29,6 +29,23 @@ local function anyClaim()
     return false
 end
 
+local lastLoggedLeak = nil
+local function checkLeak()
+    local playing, name
+    MaelstromMusic.Safe.call("could not check vanilla music state", function()
+        playing = getSoundManager():isPlayingMusic()
+        name = getSoundManager():getCurrentMusicName()
+    end)
+    if playing then
+        if name ~= lastLoggedLeak then
+            lastLoggedLeak = name
+            MaelstromMusic.Log.write("[diag] vanilla music still playing while suppressed: '" .. tostring(name) .. "'")
+        end
+    else
+        lastLoggedLeak = nil
+    end
+end
+
 function MaelstromMusic.VanillaMusic.restore()
     claims = {}
     silenced = false
@@ -40,6 +57,7 @@ end
 
 function MaelstromMusic.VanillaMusic.refresh()
     if anyClaim() then
+        checkLeak()
         local now = getTimestampMs()
         if silenced and now - lastAppliedAt < REAPPLY_INTERVAL_MS then
             return

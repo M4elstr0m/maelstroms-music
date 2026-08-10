@@ -171,6 +171,13 @@ local function beginFadeOut(nextId)
     sound:fadeOutAndStop(FADE_OUT_MS)
 end
 
+local function holdMusicState()
+    MaelstromMusic.Safe.call("could not hold the background music state", function()
+        getSoundManager():setMusicState("InGame")
+        getSoundManager():StopMusic()
+    end)
+end
+
 local function release()
     if sound then
         MaelstromMusic.Safe.call("could not stop the background soundtrack", function()
@@ -204,6 +211,7 @@ function MaelstromMusic.Ambience.Director.onTick()
         startNewGap()
     end
     MaelstromMusic.VanillaMusic.refresh()
+    holdMusicState()
 
     if fadingOut then
         if sound:updateFade() then
