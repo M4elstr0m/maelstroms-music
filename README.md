@@ -227,6 +227,7 @@ See [ADDONS.md](ADDONS.md) for the full addon creation guide.
 - [x] Allow multiple addons to share the same radio / TV station with the same config
 - [x] Add delay between Main Menu music replays & allow multiple main menu music
 - [x] Comptatibility with .flac files
+- [ ] Allow ordering even with shuffle=true
 - [ ] Display music title when it starts playing on radio
 - [ ] Music VHS? (vanilla integrated)
 
