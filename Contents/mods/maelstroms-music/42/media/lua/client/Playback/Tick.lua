@@ -31,14 +31,23 @@ local function checkPlayerGone()
     end
 end
 
-local function updateEntry(entry, index, playerX, playerY, playerZ, player)
-    local stillTuned = entry.device and entry.deviceData:getIsTurnedOn() and
-        MaelstromMusic.Playback.Cache.stationForFrequency(entry.deviceData:getChannel()) == entry.stationId
+local function dropEntry(entry, index)
+    entry.sound:stop()
+    MaelstromMusic.Playback.Cache.removeAt(index)
+    finishedCounters[entry] = nil
+end
 
-    if not stillTuned then
-        entry.sound:stop()
-        MaelstromMusic.Playback.Cache.removeAt(index)
-        finishedCounters[entry] = nil
+local function isStillTuned(entry)
+    if not entry.device or not MaelstromMusic.Playback.Device.isPresent(entry.device, entry.deviceData) then
+        return false
+    end
+    return entry.deviceData:getIsTurnedOn() and
+        MaelstromMusic.Playback.Cache.stationForFrequency(entry.deviceData:getChannel()) == entry.stationId
+end
+
+local function updateEntry(entry, index, playerX, playerY, playerZ, player)
+    if not isStillTuned(entry) then
+        dropEntry(entry, index)
         return
     end
 
@@ -56,9 +65,7 @@ local function updateEntry(entry, index, playerX, playerY, playerZ, player)
     local distance = math.sqrt((playerX - entry.x) ^ 2 + (playerY - entry.y) ^ 2 + (playerZ - entry.z) ^ 2)
 
     if not isHeld and not inMyVehicle and distance > MAX_RANGE then
-        entry.sound:stop()
-        MaelstromMusic.Playback.Cache.removeAt(index)
-        finishedCounters[entry] = nil
+        dropEntry(entry, index)
         return
     end
 
