@@ -70,6 +70,17 @@ end
 
 MaelstromMusic.Playback.Device.locate = locate
 
+function MaelstromMusic.Playback.Device.isPresent(device, deviceData)
+    if deviceData.isVehicleDevice and deviceData:isVehicleDevice() then
+        local part = deviceData:getParent()
+        return part ~= nil and part:getVehicle() ~= nil
+    end
+    if instanceof(device, "InventoryItem") then
+        return device:getContainer() ~= nil or device:getWorldItem() ~= nil
+    end
+    return device:getObjectIndex() ~= -1
+end
+
 function MaelstromMusic.Playback.Device.playStation(stationId, device)
     local deviceData = device:getDeviceData()
     if not deviceData then
