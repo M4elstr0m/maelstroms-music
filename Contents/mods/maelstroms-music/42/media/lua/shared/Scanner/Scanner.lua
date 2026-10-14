@@ -109,6 +109,22 @@ local function collectMainMenuFiles(sources)
     return trackFiles
 end
 
+local function collectDeathTracks(sources)
+    local trackFiles, trackDirs = {}, {}
+    for _, source in ipairs(sources) do
+        for _, fileName in ipairs(MaelstromMusic.Fs.listFilesFrom(source.modId, MaelstromMusic.DEATHS_DIR)) do
+            local _, station = MaelstromMusic.Scanner.Station.tryLoad(source.modId, MaelstromMusic.DEATHS_DIR, "death", fileName)
+            if station then
+                for index, trackFile in ipairs(station.trackFiles) do
+                    table.insert(trackFiles, trackFile)
+                    table.insert(trackDirs, station.trackDirs[index])
+                end
+            end
+        end
+    end
+    return trackFiles, trackDirs
+end
+
 local function buildSources()
     local sources = { { modId = MaelstromMusic.MOD_ID, name = "Maelstrom's Music" } }
     for _, addon in ipairs(MaelstromMusic.Addons.Discovery.scan()) do
@@ -159,6 +175,20 @@ local function discoverStations(sources)
         }
     end
 
+    local deathFiles, deathDirs = collectDeathTracks(sources)
+    if #deathFiles > 0 then
+        stations["death"] = {
+            ownerModId = MaelstromMusic.MOD_ID,
+            rawDir = MaelstromMusic.DEATHS_DIR,
+            rawName = "",
+            kind = "death",
+            title = "Game Over",
+            shuffle = true,
+            trackFiles = deathFiles,
+            trackDirs = deathDirs,
+        }
+    end
+
     return stations
 end
 
@@ -180,7 +210,7 @@ function MaelstromMusic.Scanner.run()
         local fixedFrequencyByStationId = {}
         for _, stationId in ipairs(stationIds) do
             local station = stations[stationId]
-            if station.kind ~= "background" and station.kind ~= "mainmenu" then
+            if station.kind == "radio" or station.kind == "television" then
                 table.insert(tunableIds, stationId)
                 if station.fixedFrequency then
                     fixedFrequencyByStationId[stationId] = station.fixedFrequency
