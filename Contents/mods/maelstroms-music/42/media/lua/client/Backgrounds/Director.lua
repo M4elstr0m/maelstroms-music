@@ -27,6 +27,7 @@ local moodCounter = 0
 local takenOver = false
 local gapTicksRemaining = 0
 local radioSuppressed = false
+local playerDead = false
 local nextPicks = {}
 local interruptedTrack = {}
 local trackStartedAt = 0
@@ -193,7 +194,7 @@ local function release()
 end
 
 function MaelstromMusic.Ambience.Director.onTick()
-    if not MaelstromMusic.ScanComplete then
+    if not MaelstromMusic.ScanComplete or playerDead then
         return
     end
 
@@ -269,6 +270,13 @@ function MaelstromMusic.Ambience.Director.onTick()
     playTrack(pickBackgroundId(MaelstromMusic.Ambience.Mood.current()))
 end
 
+local function onPlayerDeath()
+    playerDead = true
+    if takenOver then
+        release()
+    end
+end
+
 local function checkPlayerGone()
     if takenOver and not getPlayer() then
         release()
@@ -279,3 +287,5 @@ Events.OnTick.Add(MaelstromMusic.Ambience.Director.onTick)
 Events.OnRenderTick.Add(checkPlayerGone)
 Events.OnPreMapLoad.Add(primeMoods)
 Events.OnMainMenuEnter.Add(release)
+Events.OnPlayerDeath.Add(onPlayerDeath)
+Events.OnCreatePlayer.Add(function() playerDead = false end)
