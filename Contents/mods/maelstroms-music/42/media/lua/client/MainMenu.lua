@@ -4,6 +4,7 @@ require "Safe"
 require "Sound"
 require "VanillaMusic"
 require "Track"
+require "VoicePreview"
 
 MaelstromMusic.MainMenu = {}
 
@@ -13,6 +14,7 @@ local FADE_OUT_MS = 2500
 local FADE_OUT_TIMEOUT_MS = FADE_OUT_MS + 1500
 local RESTART_GRACE_MS = 1500
 local TRACK_GAP_MS = 10000
+local PREVIEW_DUCK_LEVEL = 0.3
 
 local sound = nil
 local active = false
@@ -45,7 +47,18 @@ local function updateClaim()
     MaelstromMusic.VanillaMusic.refresh()
 end
 
+local function themeVolume()
+    local volume = MaelstromMusic.VanillaMusic.optionVolume()
+    if MaelstromMusic.VoicePreview.isPlaying() then
+        return volume * PREVIEW_DUCK_LEVEL
+    end
+    return volume
+end
+
 local function holdMusicState()
+    if MaelstromMusic.VoicePreview.isPlaying() then
+        return
+    end
     MaelstromMusic.Safe.call("could not hold the main menu music state", function()
         getSoundManager():setMusicState("MainMenu")
         getSoundManager():StopMusic()
@@ -79,7 +92,7 @@ local function startTrack(trackName, index)
     MaelstromMusic.Safe.call("could not recentre the main menu emitter", function()
         menuEmitter():setPos(0, 0, 0)
     end)
-    sound:setVolume(MaelstromMusic.VanillaMusic.optionVolume())
+    sound:setVolume(themeVolume())
     sound:setFadeLevel(0)
     sound:play(trackName)
     sound:fadeTo(1, FADE_IN_MS)
@@ -161,7 +174,7 @@ local function onRenderTick()
     end
 
     sound:updateFade()
-    sound:setVolume(MaelstromMusic.VanillaMusic.optionVolume())
+    sound:setVolume(themeVolume())
 
     if getTimestampMs() - startedAt > RESTART_GRACE_MS and not sound:isPlaying() then
         discardSound()
