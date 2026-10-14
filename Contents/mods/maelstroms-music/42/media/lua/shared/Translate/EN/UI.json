@@ -1,0 +1,6 @@
+{
+    "UI_MaelstromMusic_Title": "Maelstrom's Music",
+    "UI_MaelstromMusic_StationsTitle": "Stations",
+    "UI_MaelstromMusic_ShowExampleStation": "Show the example radio station",
+    "UI_MaelstromMusic_ShowExampleStation_tt": "Lists the bundled example station in the radio and TV presets. The station stays tunable by frequency when hidden."
+}
