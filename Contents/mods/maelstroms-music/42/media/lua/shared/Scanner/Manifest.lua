@@ -127,7 +127,7 @@ function MaelstromMusic.Scanner.Manifest.buildStations(stations, stationIds, fre
                 tracks = trackNames,
                 trackFiles = station.trackFiles,
                 frequency = frequency,
-                autoPreset = not station.fixedFrequency,
+                autoPreset = station.autoPreset and not station.fixedFrequency,
                 forcedNext = forcedNext,
                 gated = gated,
             }

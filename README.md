@@ -38,6 +38,7 @@ No strange audio editing, no additional UIs, no sound-bank hacking, just audio f
 - [Adding a Radio Station or TV Channel](#adding-a-radio-station-or-tv-channel)
 - [Custom Background Soundtrack](#custom-background-soundtrack)
 - [Main Menu Theme](#main-menu-theme)
+- [Settings](#settings)
 - [Addon Mods](#addon-mods)
 - [Limitations](#limitations)
 - [Credits](#credits)
@@ -90,6 +91,7 @@ Radio stations and TV channels use the exact same convention: radio stations liv
    | `shuffle`     | boolean | No       | `false` | `false` plays tracks in order, looping back to the start. `true` plays them in random order.                                                                                                                                                                                                                                                       |
    | `fade`        | boolean | No       | `false` | Ease each track in over a couple of seconds instead of starting at full volume. Nice for music, less so for talk radio where you don't want the first words swallowed.                                                                                                                                                                             |
    | `frequency`   | number  | No       | None    | Pin the station to an exact frequency (in MHz, e.g. `95.4`) instead of letting the mod assign one automatically. See [Manual Frequencies](#manual-frequencies) below.                                                                                                                                                                              |
+   | `autoPreset`  | boolean | No       | `true`  | Set to `false` to keep the station out of the automatic radio and TV presets, players then have to tune to it by frequency. Stations with a fixed `frequency` are never auto-added. |
    | `mergeTracks` | boolean | No       | `false` | If `true`, this station shares its tracks with any other active station (from this mod or an addon) that also has `mergeTracks: true` and the exact same `title` (case-insensitive). Useful for addons that add more music to an existing station instead of creating a new one. See [Addon Guide](ADDONS.md#sharing-tracks-with-another-station). |
    | `sequences`   | array   | No       | None    | Force specific tracks to always play right after one another, even with `shuffle: true`. See [Forcing Track Order](#forcing-track-order) below.                                                                                                                                                                                                    |
 
@@ -222,6 +224,14 @@ common/media/mainmenu/My Theme.mp3
 That's it. Drop a `.mp3`, `.ogg`, `.flac`, or `.wav` file in `common/media/mainmenu/`, and it replaces the vanilla main menu music.
 
 You can drop in more than one file. With two or more, they're played in random order (never the same one twice in a row) for as long as the player sits at the main menu, instead of just looping the one track. Either way, there's a 10-second pause of silence between one track ending and the next one starting - even with just a single track, so it doesn't loop back-to-back with no gap.
+
+## Settings
+
+Maelstrom's Music adds a page to the game's **Options > Mods** screen. Settings are stored per player on your machine, they never affect other players of a server.
+
+| Setting                        | Default | Description                                                                                                                              |
+| ------------------------------ | ------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Show the example radio station | On      | Lists the bundled example station in radio and TV presets. Turn it off to hide it, it stays tunable by frequency and no other frequency changes. |
 
 ## Addon Mods
 
