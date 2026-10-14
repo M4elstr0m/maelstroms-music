@@ -232,6 +232,8 @@ Maelstrom's Music adds a page to the game's **Options > Mods** screen. Settings 
 | Setting                        | Default | Description                                                                                                                              |
 | ------------------------------ | ------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | Show the example radio station | On      | Lists the bundled example station in radio and TV presets. Turn it off to hide it, it stays tunable by frequency and no other frequency changes. |
+| Shortest pause between tracks  | 30 s    | Background soundtrack only. After a track ends, the mod stays silent for a random time between the shortest and longest pause before the next track. |
+| Longest pause between tracks   | 80 s    | Background soundtrack only. Raised to the shortest pause if set lower. Set both to 0 for back to back tracks. |
 
 ## Addon Mods
 
