@@ -119,6 +119,7 @@ function MaelstromMusic.Scanner.Station.tryLoad(modId, baseDir, kind, fileName)
         fade = data.fade == true,
         drama = data.drama,
         fixedFrequency = fixedFrequency,
+        autoPreset = data.autoPreset ~= false,
         mergeTracks = (kind == "radio" or kind == "television") and data.mergeTracks == true,
         trackFiles = trackFiles,
         trackDirs = trackDirs,
