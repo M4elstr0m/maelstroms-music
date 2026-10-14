@@ -6,13 +6,12 @@ require "Track"
 require "Mood"
 require "Warmup"
 require "VanillaMusic"
+require "Options"
 
 MaelstromMusic.Ambience.Director = {}
 
 local CLAIM_KEY = "backgrounds"
 local MOOD_CHECK_INTERVAL = 30
-local MIN_GAP_TICKS = 1800
-local MAX_GAP_TICKS = 4800
 local FADE_IN_MS = 4000
 local FADE_OUT_MS = 3000
 local LOOKAHEAD = 2
@@ -25,7 +24,7 @@ local pendingId = nil
 local fadingOut = false
 local moodCounter = 0
 local takenOver = false
-local gapTicksRemaining = 0
+local gapEndsAt = 0
 local radioSuppressed = false
 local nextPicks = {}
 local interruptedTrack = {}
@@ -73,7 +72,8 @@ local function startNewGap()
     currentTrackIndex = nil
     pendingId = nil
     fadingOut = false
-    gapTicksRemaining = ZombRand(MIN_GAP_TICKS, MAX_GAP_TICKS + 1)
+    local minSeconds, maxSeconds = MaelstromMusic.Options.backgroundGapSeconds()
+    gapEndsAt = getTimestampMs() + ZombRand(minSeconds * 1000, maxSeconds * 1000 + 1)
 end
 
 local function ensurePicks(backgroundId, background)
@@ -261,8 +261,7 @@ function MaelstromMusic.Ambience.Director.onTick()
         return
     end
 
-    if gapTicksRemaining > 0 then
-        gapTicksRemaining = gapTicksRemaining - 1
+    if getTimestampMs() < gapEndsAt then
         return
     end
 
