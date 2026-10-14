@@ -41,7 +41,7 @@ Maelstrom's Music scans every currently active Workshop mod at boot. Any mod tha
    - `common/media/mainmenu/<file>` for a main menu theme
    - `common/media/deaths/<Name>.json` + `common/media/deaths/<Name>/` for game over music
 
-   Same field names (`title`, `shuffle`, `fade`, `drama`, `frequency`, `mergeTracks`, `sequences`), same rules (comma-free filenames, JSON sitting next to the folder rather than inside it, `.mp3`/`.ogg`/`.flac`/`.wav` only).
+   Same field names (`title`, `shuffle`, `fade`, `drama`, `frequency`, `autoPreset`, `mergeTracks`, `sequences`), same rules (comma-free filenames, JSON sitting next to the folder rather than inside it, `.mp3`/`.ogg`/`.flac`/`.wav` only).
 
 ## What merges, and what doesn't
 

@@ -2,6 +2,7 @@ require "Namespace"
 require "Cache"
 require "Device"
 require "DeviceRange"
+require "Options"
 
 MaelstromMusic.Playback.Hooks = {}
 
@@ -40,6 +41,33 @@ end
 local origReadPresets = RWMChannel.readPresets
 local origReadPresetsTV = RWMChannelTV.readPresets
 
+local function isHiddenByOption(stationId)
+    return stationId == MaelstromMusic.EXAMPLE_STATION_ID and not MaelstromMusic.Options.showExampleStation()
+end
+
+local function removeHiddenPresets(devicePresets, presets)
+    local removed = false
+    for index = presets:size() - 1, 0, -1 do
+        local frequency = presets:get(index):getFrequency()
+        for stationId, station in pairs(MaelstromMusic.Broadcasts or {}) do
+            if isHiddenByOption(stationId) and station.frequency == frequency then
+                devicePresets:removePreset(index)
+                removed = true
+                break
+            end
+        end
+    end
+    return removed
+end
+
+local function wantsPreset(stationId, station, wantKind, minChannel, maxChannel)
+    return station.kind == wantKind
+        and station.autoPreset
+        and not isHiddenByOption(stationId)
+        and station.frequency >= minChannel
+        and station.frequency <= maxChannel
+end
+
 local function ensureStationPresets(devicePresets, deviceData)
     local presets = devicePresets:getPresets()
     if not presets then
@@ -59,10 +87,10 @@ local function ensureStationPresets(devicePresets, deviceData)
     local minChannel = deviceData:getMinChannelRange()
     local maxChannel = deviceData:getMaxChannelRange()
 
-    local added = false
+    local changed = removeHiddenPresets(devicePresets, presets)
     for stationId, station in pairs(MaelstromMusic.Broadcasts or {}) do
         local freq = station.frequency
-        if station.kind == wantKind and station.autoPreset and freq >= minChannel and freq <= maxChannel then
+        if wantsPreset(stationId, station, wantKind, minChannel, maxChannel) then
             local found = false
             for i = 0, presets:size() - 1 do
                 if presets:get(i):getFrequency() == freq then
@@ -75,11 +103,11 @@ local function ensureStationPresets(devicePresets, deviceData)
                     devicePresets:setMaxPresets(presets:size() + 1)
                 end
                 devicePresets:addPreset(station.title, freq)
-                added = true
+                changed = true
             end
         end
     end
-    return added
+    return changed
 end
 
 function RWMChannel:readPresets(_selected)
