@@ -9,6 +9,7 @@ local KIND_ID_PREFIX = {
     radio = "radio_",
     television = "tv_",
     background = "bg_",
+    death = "death_",
 }
 
 local function sanitizeIdentifier(str)

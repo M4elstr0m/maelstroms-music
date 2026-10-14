@@ -22,28 +22,58 @@ function MaelstromMusic.Scanner.Manifest.buildText(stations, stationIds)
     return table.concat(lines, "\n")
 end
 
+local function buildTrackSounds(stationId, station)
+    local definitions = {}
+    for index, trackFile in ipairs(station.trackFiles) do
+        local soundName = "BroadcastTrack_" .. stationId .. "_" .. index
+        local rawName = station.trackDirs and station.trackDirs[index] or station.rawName
+        local filePath = rawName ~= "" and (station.rawDir .. "/" .. rawName .. "/" .. trackFile) or (station.rawDir .. "/" .. trackFile)
+        table.insert(definitions, "\tsound " .. soundName .. "\n" ..
+            "\t{\n" ..
+            "\t\tcategory = Maelstrom Music,\n" ..
+            "\t\tmaster = Ambient,\n" ..
+            "\t\tis3D = false,\n" ..
+            "\t\tclip\n" ..
+            "\t\t{\n" ..
+            "\t\t\tfile = " .. filePath .. ",\n" ..
+            "\t\t\tdistanceMax = 75,\n" ..
+            "\t\t}\n" ..
+            "\t}\n\n")
+    end
+    return definitions
+end
+
+local function buildDeathSound(station)
+    local clips = {}
+    for index, trackFile in ipairs(station.trackFiles) do
+        table.insert(clips, "\t\tclip\n" ..
+            "\t\t{\n" ..
+            "\t\t\tfile = " .. station.rawDir .. "/" .. station.trackDirs[index] .. "/" .. trackFile .. ",\n" ..
+            "\t\t}\n")
+    end
+    return "module Base\n{\n" ..
+        "\tsound PlayerDied\n" ..
+        "\t{\n" ..
+        "\t\tcategory = Player,\n" ..
+        table.concat(clips) ..
+        "\t}\n" ..
+        "}\n"
+end
+
 function MaelstromMusic.Scanner.Manifest.buildGeneratedScript(stations, stationIds)
     local parts = { "module MaelstromMusic\n{\n" }
     for _, stationId in ipairs(stationIds) do
         local station = stations[stationId]
-        for index, trackFile in ipairs(station.trackFiles) do
-            local soundName = "BroadcastTrack_" .. stationId .. "_" .. index
-            local rawName = station.trackDirs and station.trackDirs[index] or station.rawName
-            local filePath = rawName ~= "" and (station.rawDir .. "/" .. rawName .. "/" .. trackFile) or (station.rawDir .. "/" .. trackFile)
-            table.insert(parts, "\tsound " .. soundName .. "\n" ..
-                "\t{\n" ..
-                "\t\tcategory = Maelstrom Music,\n" ..
-                "\t\tmaster = Ambient,\n" ..
-                "\t\tis3D = false,\n" ..
-                "\t\tclip\n" ..
-                "\t\t{\n" ..
-                "\t\t\tfile = " .. filePath .. ",\n" ..
-                "\t\t\tdistanceMax = 75,\n" ..
-                "\t\t}\n" ..
-                "\t}\n\n")
+        if station.kind ~= "death" then
+            for _, definition in ipairs(buildTrackSounds(stationId, station)) do
+                table.insert(parts, definition)
+            end
         end
     end
     table.insert(parts, "}\n")
+    if stations["death"] then
+        table.insert(parts, buildDeathSound(stations["death"]))
+    end
     return table.concat(parts)
 end
 

@@ -39,12 +39,14 @@ Maelstrom's Music scans every currently active Workshop mod at boot. Any mod tha
    - `common/media/televisions/<Name>.json` + `common/media/televisions/<Name>/` for TV channels
    - `common/media/backgrounds/<Name>.json` + `common/media/backgrounds/<Name>/` for a background soundtrack
    - `common/media/mainmenu/<file>` for a main menu theme
+   - `common/media/deaths/<Name>.json` + `common/media/deaths/<Name>/` for game over music
 
    Same field names (`title`, `shuffle`, `fade`, `drama`, `frequency`, `autoPreset`, `mergeTracks`, `sequences`), same rules (comma-free filenames, JSON sitting next to the folder rather than inside it, `.mp3`/`.ogg`/`.flac`/`.wav` only).
 
 ## What merges, and what doesn't
 
 - **Radio stations and TV channels always merge.** Every active addon's stations are added alongside the base mod's own and everyone else's - that's the entire point of this system. Frequencies are assigned automatically across everything combined, so you never need to coordinate frequency numbers with anyone - unless you pin one with `frequency` (see the main README's [Manual Frequencies](README.md#manual-frequencies) section), in which case it's checked for collisions against every other source too; if two stations (from any source, including the base mod) pin the same spot, one falls back to auto-assignment instead, logged clearly so you know it happened.
+- **Game over music always merges.** Every active source's `common/media/deaths/` tracks are pooled together, and the game picks one at random when the character dies.
 - **Main menu themes always merge.** Every active source's `common/media/mainmenu/` track(s) are pooled together into one big playlist and played in random order (never the same one twice in a row), with a 10-second pause between tracks, for as long as the player sits at the main menu. You can drop in more than one file yourself too, addon or not - it's not limited to "one file per source."
 - **Background soundtrack is exclusive.** Only one active source gets to supply it - mixing two unrelated background soundtracks together wouldn't sound intentional, so only one wins. The base mod's own `common/media/backgrounds/` always takes priority if the player has set one up themselves; otherwise, whichever addon's mod ID sorts first alphabetically wins, and every other contender is skipped with a clear log line explaining why. If your addon's background soundtrack isn't playing, check the console log for that message first - it means another mod won that slot, not that something is broken.
 
