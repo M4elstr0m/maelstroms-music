@@ -14,3 +14,6 @@ Contents/mods/maelstroms-music/common/media/backgrounds/*
 
 Contents/mods/maelstroms-music/common/media/mainmenu/*
 !Contents/mods/maelstroms-music/common/media/mainmenu/.gitkeep
+
+Contents/mods/maelstroms-music/common/media/deaths/*
+!Contents/mods/maelstroms-music/common/media/deaths/.gitkeep

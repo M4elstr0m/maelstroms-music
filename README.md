@@ -38,6 +38,7 @@ No strange audio editing, no additional UIs, no sound-bank hacking, just audio f
 - [Adding a Radio Station or TV Channel](#adding-a-radio-station-or-tv-channel)
 - [Custom Background Soundtrack](#custom-background-soundtrack)
 - [Main Menu Theme](#main-menu-theme)
+- [Game Over Music](#game-over-music)
 - [Addon Mods](#addon-mods)
 - [Limitations](#limitations)
 - [Credits](#credits)
@@ -223,6 +224,25 @@ That's it. Drop a `.mp3`, `.ogg`, `.flac`, or `.wav` file in `common/media/mainm
 
 You can drop in more than one file. With two or more, they're played in random order (never the same one twice in a row) for as long as the player sits at the main menu, instead of just looping the one track. Either way, there's a 10-second pause of silence between one track ending and the next one starting - even with just a single track, so it doesn't loop back-to-back with no gap.
 
+## Game Over Music
+
+Replace the music played when your character dies. It uses the same convention as stations, with the files in `common/media/deaths/`:
+
+1. Create a JSON file, e.g. `common/media/deaths/grim.json`, containing only a title:
+
+   ```json
+   {
+       "title": "Grim"
+   }
+   ```
+
+2. Create a folder with the **exact same name** next to it and drop your tracks in, e.g. `common/media/deaths/grim/Last Breath.mp3`.
+
+Every track of every folder, from this mod and from addons, is pooled together and the game picks one at random on death. If `deaths/` is empty, the vanilla game over music plays as normal.
+
+> [!NOTE]
+> While a custom background soundtrack is active, the vanilla music is muted. On death the mod hands the vanilla music back so the game over music is audible.
+
 ## Addon Mods
 
 Other Workshop mod authors can ship their own radio stations, TV channels, background soundtrack, or main menu theme in a **separate** mod that plugs directly into Maelstrom's Music. Players just subscribe to both, no manual file copying involved.
@@ -245,6 +265,7 @@ At boot, Maelstrom's Music scans every other active mod that:
 Any mod meeting both conditions gets scanned using the exact same `common/media/radios|televisions|backgrounds|mainmenu` convention described above.
 
 - **Radio stations and TV channels always merge.** Every active addon's stations are added alongside the base mod's own and everyone else's, with frequencies assigned automatically across everything combined.
+- **Game over music always merges.** Every active source's `deaths/` tracks are pooled together.
 - **Main menu themes always merge.** Every active source's `mainmenu/` track(s) are pooled together and played in random order, same as if they'd all been dropped in one mod's folder.
 - **Background soundtrack is exclusive.** Only one active source supplies it - mixing two unrelated background soundtracks together wouldn't sound intentional. The base mod's own `backgrounds/` wins if the player set one up themselves; otherwise the first addon (alphabetically by mod ID) wins, and every other contender is skipped with a clear line in the console log explaining why.
 
