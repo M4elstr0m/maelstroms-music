@@ -3,7 +3,6 @@ require "Safe"
 require "Playback/Cache"
 require "Playback/Device"
 require "Playback/Discovery"
-require "Playback/Spatial"
 
 MaelstromMusic.Playback.Tick = {}
 
@@ -109,11 +108,6 @@ local function updateEntry(entry, index, playerX, playerY, playerZ)
         local volumeModifier = ((MIN_RANGE + dropoffRange - distance) / dropoffRange)
         if volumeModifier < 0 then volumeModifier = 0 end
         if volumeModifier > 1 then volumeModifier = 1 end
-        if Device.isPositional(mode) then
-            Device.placeSound(entry.sound, entry.x, entry.y, entry.z)
-        else
-            volumeModifier = volumeModifier * MaelstromMusic.Playback.Spatial.centeredGain(distance)
-        end
         entry.sound:setVolume(entry.deviceData:getDeviceVolume() * volumeModifier)
     end
 
