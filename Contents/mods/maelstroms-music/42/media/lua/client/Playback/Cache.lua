@@ -32,6 +32,17 @@ function MaelstromMusic.Playback.Cache.get(deviceData)
     return nil
 end
 
+function MaelstromMusic.Playback.Cache.takeOrphan(stationId, x, y, maxDistance)
+    for _, entry in ipairs(MaelstromMusic.Playback.Cache.entries) do
+        if entry.orphanedAt and entry.stationId == stationId and entry.sound:isPlaying() then
+            if not x or math.sqrt((entry.x - x) ^ 2 + (entry.y - y) ^ 2) <= maxDistance then
+                return entry
+            end
+        end
+    end
+    return nil
+end
+
 function MaelstromMusic.Playback.Cache.add(entry)
     table.insert(MaelstromMusic.Playback.Cache.entries, entry)
 end

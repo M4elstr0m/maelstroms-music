@@ -10,6 +10,7 @@ MaelstromMusic.Playback.Device = {}
 local FADE_IN_MS = 2000
 local MAX_SEEDED_STATIONS = 12
 local LOOKAHEAD = 2
+local ORPHAN_ADOPT_RADIUS = 20
 
 local nextByStation = {}
 
@@ -81,15 +82,7 @@ function MaelstromMusic.Playback.Device.isPresent(device, deviceData)
     return device:getObjectIndex() ~= -1
 end
 
-function MaelstromMusic.Playback.Device.playStation(stationId, device)
-    local deviceData = device:getDeviceData()
-    if not deviceData then
-        return
-    end
-
-    local existing = MaelstromMusic.Playback.Cache.get(deviceData)
-    local sound = existing and existing.sound or MaelstromMusic.Sound:new()
-
+local function configureSound(sound, device, deviceData)
     if deviceData.isInventoryDevice and deviceData:isInventoryDevice() then
         sound:set3D(false)
         sound:setVolumeModifier(0.6)
@@ -110,6 +103,33 @@ function MaelstromMusic.Playback.Device.playStation(stationId, device)
         sound:setPosAtObject(device)
         sound:setVolumeModifier(0.4)
     end
+end
+
+local function adoptOrphan(stationId, device, deviceData)
+    local x, y, z = locate(device, deviceData)
+    local entry = MaelstromMusic.Playback.Cache.takeOrphan(stationId, x, y, ORPHAN_ADOPT_RADIUS)
+    if not entry then
+        return false
+    end
+    entry.device = device
+    entry.deviceData = deviceData
+    entry.orphanedAt = nil
+    entry.x, entry.y, entry.z = x or entry.x, y or entry.y, z or entry.z
+    configureSound(entry.sound, device, deviceData)
+    entry.sound:setVolume(deviceData:getDeviceVolume())
+    MaelstromMusic.Log.write("'" .. MaelstromMusic.Broadcasts[stationId].title .. "' keeps playing on the moved device.")
+    return true
+end
+
+function MaelstromMusic.Playback.Device.playStation(stationId, device)
+    local deviceData = device:getDeviceData()
+    if not deviceData then
+        return
+    end
+
+    local existing = MaelstromMusic.Playback.Cache.get(deviceData)
+    local sound = existing and existing.sound or MaelstromMusic.Sound:new()
+    configureSound(sound, device, deviceData)
 
     local station = MaelstromMusic.Broadcasts[stationId]
     ensurePicks(stationId, station)
@@ -170,6 +190,10 @@ function MaelstromMusic.Playback.Device.ensurePlaying(device)
 
     local entry = MaelstromMusic.Playback.Cache.get(deviceData)
     if entry and entry.sound and entry.sound:isPlaying() then
+        return
+    end
+
+    if not entry and adoptOrphan(stationId, device, deviceData) then
         return
     end
 
