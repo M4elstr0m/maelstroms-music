@@ -6,6 +6,10 @@ MaelstromMusic.Options = {}
 local SHOW_EXAMPLE_STATION = "showExampleStation"
 local BACKGROUND_GAP_MIN = "backgroundGapMinSeconds"
 local BACKGROUND_GAP_MAX = "backgroundGapMaxSeconds"
+local STEREO_SAFE_POSITIONING = "stereoSafePositioning"
+local LISTENER_FRAME = "listenerFrame"
+
+local FRAME_AUTO, FRAME_SCREEN, FRAME_PLAYER = 1, 2, 3
 
 local DEFAULT_GAP_MIN_SECONDS = 30
 local DEFAULT_GAP_MAX_SECONDS = 80
@@ -32,6 +36,18 @@ function MaelstromMusic.Options.backgroundGapSeconds()
     return minSeconds, math.max(minSeconds, maxSeconds)
 end
 
+function MaelstromMusic.Options.stereoSafePositioning()
+    return readValue(STEREO_SAFE_POSITIONING, false)
+end
+
+function MaelstromMusic.Options.listenerFrame()
+    local choice = readValue(LISTENER_FRAME, FRAME_AUTO)
+    if choice == FRAME_PLAYER or (choice == FRAME_AUTO and Viewpoint ~= nil) then
+        return "player"
+    end
+    return "screen"
+end
+
 local function moveToFront(createdPage)
     local pages = PZAPI.ModOptions.Data
     for index, existing in ipairs(pages) do
@@ -54,6 +70,12 @@ local function install()
     page:addTitle("UI_MaelstromMusic_BackgroundsTitle")
     page:addSlider(BACKGROUND_GAP_MIN, "UI_MaelstromMusic_GapMin", 0, GAP_SLIDER_MAX_SECONDS, GAP_SLIDER_STEP_SECONDS, DEFAULT_GAP_MIN_SECONDS, "UI_MaelstromMusic_GapMin_tt")
     page:addSlider(BACKGROUND_GAP_MAX, "UI_MaelstromMusic_GapMax", 0, GAP_SLIDER_MAX_SECONDS, GAP_SLIDER_STEP_SECONDS, DEFAULT_GAP_MAX_SECONDS, "UI_MaelstromMusic_GapMax_tt")
+    page:addTitle("UI_MaelstromMusic_AudioTitle")
+    page:addTickBox(STEREO_SAFE_POSITIONING, "UI_MaelstromMusic_StereoSafe", false, "UI_MaelstromMusic_StereoSafe_tt")
+    local frame = page:addComboBox(LISTENER_FRAME, "UI_MaelstromMusic_ListenerFrame", "UI_MaelstromMusic_ListenerFrame_tt")
+    frame:addItem("UI_MaelstromMusic_FrameAuto", true)
+    frame:addItem("UI_MaelstromMusic_FrameScreen", false)
+    frame:addItem("UI_MaelstromMusic_FramePlayer", false)
     MaelstromMusic.Safe.call("could not load the saved options", function()
         PZAPI.ModOptions:load()
     end)
