@@ -8,6 +8,7 @@ description=[i]Because the apocalypse deserves a soundtrack.[/i]
 description=
 description=A Project Zomboid mod that lets you turn your own MP3, OGG, FLAC, or WAV files into fully tunable radio stations, TV channels, an adaptive background soundtrack, or a custom main menu theme.
 description=[b]No complex audio editing, no extra UIs, no sound-bank hacking: just drop audio files in your mod folder or install an addon.[/b] Designed to merge a lot of music related features in a single mod.
+description=[b]Compatible with [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3809306528]Project Viewpoint[/url][/b], the first person view mod.
 description=
 description=[b][url=https://github.com/M4elstr0m/maelstroms-music]Github Link 🔗[/url][/b]
 description=[b]If you like my work[/b], please support it by liking and rewarding this item AND [b]starring my [url=https://github.com/M4elstr0m/maelstroms-music]Github repository[/url][/b] ⭐

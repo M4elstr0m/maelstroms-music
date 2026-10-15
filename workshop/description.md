@@ -3,6 +3,7 @@
 
 A Project Zomboid mod that lets you turn your own MP3, OGG, FLAC, or WAV files into fully tunable radio stations, TV channels, an adaptive background soundtrack, or a custom main menu theme.
 **No complex audio editing, no extra UIs, no sound-bank hacking: just drop audio files in your mod folder or install an addon.** Designed to merge a lot of music related features in a single mod.
+**Compatible with [Project Viewpoint](https://steamcommunity.com/sharedfiles/filedetails/?id=3809306528)**, the first person view mod.
 
 **[Github Link 🔗](https://github.com/M4elstr0m/maelstroms-music)**
 **If you like my work**, please support it by liking and rewarding this item AND **starring my [Github repository](https://github.com/M4elstr0m/maelstroms-music)** ⭐
