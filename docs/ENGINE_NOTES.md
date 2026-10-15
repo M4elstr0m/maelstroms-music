@@ -12,6 +12,7 @@ Verified facts about Project Zomboid Build 42 (tested on 42.20 and 42.21) that s
 - File based sounds cannot seek. `setTimelinePosition` is a no-op for `FileSound`, and there is no position getter or pause call. "Resume" of an interrupted background track therefore replays it from the start.
 - `FMODManager.loadSound()` always passes mode `16` (`FMOD_3D`). `FMOD_NONBLOCKING` exists but is unreachable, so decoding a track cannot be made asynchronous. Only the moment it happens can be chosen, which is what `Warmup.lua` does (pre-decode during the loading screen and one track ahead).
 - Decoded sounds are cached in `fileToSoundMap` and never evicted except by `reloadSoundFiles()`.
+- `GameSounds.getSound(name)` never returns nil, it registers an empty placeholder for an unknown name. Test `GameSounds.isKnownSound(name)` first, and never call `getSound` on a name that may not exist, or the placeholder makes later checks pass.
 - A track filename containing a comma breaks the sound script parser (`ArrayIndexOutOfBoundsException` in `GameSoundScript.LoadClip`) and the sound is dropped silently. The scanner skips such files and logs a warning.
 - The dial steps in 0.2 MHz, so frequencies are multiples of `FREQ_STEP` (200 in internal units).
 - The native FMOD library contains these codecs only: mpeg, oggvorbis, wav, flac, plus module formats. AAC, M4A and Opus cannot be supported. AIFF would be a plausible addition (PCM path).
@@ -24,6 +25,8 @@ Verified facts about Project Zomboid Build 42 (tested on 42.20 and 42.21) that s
 - `OnModsModified` is a file watcher event, not a "mods toggled" event.
 - Toggling a mod or choosing "Quit to Menu" runs `Core.ResetLua()`: all Lua is wiped (`wipeRecurse` destroys nested global tables as well as locals) and reloaded first, then `OnGameBoot`, `OnMainMenuEnter` and `OnResetLua` fire on the fresh environment. Cleanup hooked on `OnMainMenuEnter` therefore runs too late. `Director.lua` and `Tick.lua` poll `getPlayer() == nil` on `OnRenderTick` to release sounds immediately.
 - `getModFileWriter` always writes into the mod's `common/` folder, never the versioned folder. Generated files (`GeneratedRadios.txt`, the manifest) live there and are git-ignored.
+- `ScriptManager.Load` resolves each mod directory with `getCanonicalFile()`, lowercases it and relativizes script paths against it. A mod directory reached through a symlink therefore cannot load its script files: the log shows `ScriptManager.Load> Exception thrown` with a `FileNotFoundException` on a lowercased path, Lua still runs, and every generated sound is missing.
+- A `%%` in a `PZAPI.ModOptions` label makes `Translator.getText` throw (`UnknownFormatConversionException` inside `reportMissingArgumentsFromPastAbuse`), which aborts building the whole Mods options page. Labels and tooltips of this mod must not contain `%`.
 - `getActivatedMods`, `getModFileReader` and `listFilesInModDirectory` take an explicit mod ID, so the mod can read files of any active addon without its cooperation.
 
 ## Music state and vanilla suppression
@@ -57,6 +60,7 @@ Verified facts about Project Zomboid Build 42 (tested on 42.20 and 42.21) that s
 - An `ownsEmitter` flag on `Sound.lua`, built on an unverified theory about emitter recycling in `IsoWorld`.
 - Writing `SoundManager.allowMusic` directly (see Kahlua above).
 - `setMusicState("Loading")` during loading (see music state above).
+- Symlinking the repository into `~/Zomboid/Workshop` for local testing. Scripts of a symlinked mod do not load (see Lua environment above), deploy real copies instead.
 - Polling `getActivatedMods()` to detect mod toggles. The full Lua reload already re-runs `OnGameBoot`.
 - Keeping state on `MaelstromMusic.*` tables to survive a reload. They are wiped too.
 - A custom Boombox and vinyl UI tab (original design). It only worked for one item type and cut audio off at range. The `DynamicRadioChannel` per station design replaced it.
