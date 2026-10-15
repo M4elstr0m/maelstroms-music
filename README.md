@@ -308,6 +308,7 @@ See [ADDONS.md](ADDONS.md) for the full addon creation guide.
 - [x] Add delay between Main Menu music replays & allow multiple main menu music
 - [x] Comptatibility with .flac files
 - [x] Allow ordering even with shuffle=true
+- [x] Fixes for issues reported by users, Options, and Viewpoint Project compatibility
 - [ ] Music VHS & CDs (vanilla integrated)
 - [ ] Display music title when it starts playing on radio
 
