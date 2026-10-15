@@ -4,7 +4,7 @@ Where the project stands, what is verified, and what comes next. Update this fil
 
 ## Snapshot (2026-10-16)
 
-- `main` carries everything merged through PR 39 plus the documentation PR that added this file. Mod version `1.0.8` in `mod.info`. The tag `v1.0.8` was created earlier and predates several fixes, so a `v1.0.9` tag (tag only, no GitHub release) is the clean way to mark the current state once the maintainer is happy.
+- Version `1.1.0` in `mod.info`, released by publishing from the game's Workshop uploader (see `tools/workshop/README.md`) and then tagging `v1.1.0` (tag only, no GitHub release). `v1.0.8` predates several fixes. Never move a pushed tag.
 - The maintainer works on Arch Linux. The game is under `~/Games/Steam`, user data in `~/Zomboid`. The workspace folder that contains this repository and the addon repositories has `sync-mods.sh`, run it after every change (ADR 0002). Own published Workshop items are unsubscribed while testing.
 - Addons live next to this repository: `maelstroms-music-fallout-radio-addon` (radio stations), `maelstroms-music-rdr-addon` and `maelstroms-music-tlou-addon` (backgrounds, main menu, the TLOU one also ships the game over track "Grieving"). They are not git repositories except this one.
 
@@ -14,18 +14,11 @@ Radios and TV channels (engine 3D, ADR 0003), adaptive background soundtrack, ma
 
 ## Verified in game by the maintainer
 
-Menu theme and suppression, options persistence, background pause sliders, hide example station, TV pickup, voice preview, game over music and its volume, Quit to Menu with a radio playing, picking up and placing a radio keeping its track (after PR 32), no `require` warnings.
+Menu theme and suppression, options persistence, background pause sliders, hide example station, TV pickup, voice preview, game over music and its volume, Quit to Menu with a radio playing, picking up and placing a radio keeping its track, no `require` warnings, radios and TVs at their true position with muffling through walls, and stereo safe positioning (ADR 0009) in the isometric view and in Viewpoint first person: pan, muffling, no more silence ahead or behind. The loading screen overlap (PR 37) is only mitigated.
 
-## Not yet verified in game
+## Stereo safe positioning (ADR 0009)
 
-- PR 39 (engine 3D again): head turn stereo, muffling through walls, car radio level when getting out, all with and without Viewpoint.
-- PR 37 (earlier mute at loading events): how much shorter the vanilla music overlap during loading is.
-
-## Stereo safe positioning (branch `feat/stereo-safe-spatialization`, issue 41)
-
-Root cause of "silent dead ahead and behind" on the maintainer's machine: the game mixes in 5.1 and the PulseAudio output keeps only the front left and right speakers (ADR 0009, `tools/fmod-lab/stage_probe.py`). Implemented as an opt-in setting: a left and a right emitter per device 40 degrees to each side, equal power pan, placed on squares with the same engine occlusion as the real one so the muffle stays. Code: `Playback/Occlusion.lua`, `Stage.lua`, `Staging.lua`, wiring in `Device.lua` and `Tick.lua`, options in `Options.lua`. Offline checks all pass (`occlusion_test.lua`, `stage_test.lua`, `playback_test.lua`). The listener frame is automatic: the engine screen vector, or `getLookAngleRadians()` while Viewpoint's first or third person view is active (`Viewpoint.View.next()`, `Playback/ListenerFrame.lua`). The first in game test worked with the screen frame and not under Viewpoint (wrong direction used), this is the fix. To verify in game: with the setting on, turn around a placed radio (left, centre, right, behind), another room, a car, a held radio, toggle the setting while a station plays, in Viewpoint first person (the pan must follow the camera and not be mirrored) and in Viewpoint's isometric view. Version target 1.1.0 if it works.
-
-Second in game round (Viewpoint): left, right and facing were good, a radio behind the player was silent when the player stood outside its building (no square with the same muffling in the audible arc, so the real position behind was used) and fast turns crackled (12 Hz stepping). Fixed by the closest-square fallback with a volume make up and by per frame smoothing, see ADR 0009. To verify: turn around outside a house with a radio inside, turn quickly with the camera, with and without Viewpoint.
+Root cause of "silent dead ahead and behind" on the maintainer's Linux machine: the game mixes in 5.1 and FMOD's PulseAudio output keeps only the front left and right speakers (`tools/fmod-lab/stage_probe.py`). Opt-in setting: a left and a right emitter per device 40 degrees to each side, equal power pan, placed on squares with the same engine occlusion as the real one so the muffling stays, with the closest square plus a volume make up when none matches, per frame smoothing and a glide between squares. Code: `Playback/Occlusion.lua`, `Stage.lua`, `Staging.lua`, `ListenerFrame.lua`, wiring in `Device.lua` and `Tick.lua`, option in `Options.lua`. The listener frame is automatic: the engine screen vector, or `getLookAngleRadians()` while Viewpoint's first or third person view is active (`Viewpoint.View.next()`). Known limits: behind a wall the muffling of a radio behind the player may be lighter than in front when no square of the same rating exists in the audible arc; third person pan under Viewpoint is approximate. Not verified on Windows or macOS (the default path is the base game's own 3D sound; the option is the fallback).
 
 ## Open issues
 
