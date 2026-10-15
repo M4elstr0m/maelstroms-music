@@ -132,7 +132,8 @@ local function onGameStart()
     beginSwap()
 end
 
-local function onPreMapLoad()
+local function silenceVanillaMusic()
+    MaelstromMusic.VanillaMusic.refresh()
     if active and (loadedTrack or hasMainMenuTracks()) then
         holdMusicState()
     end
@@ -189,5 +190,7 @@ MaelstromMusic.VanillaMusic.restore()
 
 Events.OnMainMenuEnter.Add(onMainMenuEnter)
 Events.OnGameStart.Add(onGameStart)
-Events.OnPreMapLoad.Add(onPreMapLoad)
+Events.OnGameBoot.Add(silenceVanillaMusic)
+Events.OnPreMapLoad.Add(silenceVanillaMusic)
+Events.OnLoadRadioScripts.Add(silenceVanillaMusic)
 Events.OnRenderTick.Add(onRenderTick)
