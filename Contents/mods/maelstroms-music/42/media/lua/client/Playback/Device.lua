@@ -4,7 +4,6 @@ require "Sound"
 require "Playback/Cache"
 require "Playback/Track"
 require "Playback/Warmup"
-require "Playback/Spatial"
 
 MaelstromMusic.Playback.Device = {}
 
@@ -101,7 +100,7 @@ function MaelstromMusic.Playback.Device.modeOf(deviceData)
 end
 
 function MaelstromMusic.Playback.Device.isPositional(mode)
-    return (mode == "world" or mode == "vehicleOutside") and MaelstromMusic.Playback.Spatial.isDirectional()
+    return mode == "world" or mode == "vehicleOutside"
 end
 
 function MaelstromMusic.Playback.Device.applyMode(sound, mode)
@@ -115,20 +114,18 @@ function MaelstromMusic.Playback.Device.applyMode(sound, mode)
     end
 end
 
-function MaelstromMusic.Playback.Device.placeSound(sound, x, y, z)
-    local player = getPlayer()
-    local virtualX, virtualY = MaelstromMusic.Playback.Spatial.virtualPosition(player:getX(), player:getY(), x, y)
-    sound:setPos(virtualX, virtualY, z)
-end
-
 local function configureSound(sound, device, deviceData)
     local mode = MaelstromMusic.Playback.Device.modeOf(deviceData)
-    MaelstromMusic.Playback.Device.applyMode(sound, mode)
-    if MaelstromMusic.Playback.Device.isPositional(mode) then
-        local x, y, z = locate(device, deviceData)
-        if x then
-            MaelstromMusic.Playback.Device.placeSound(sound, x, y, z)
+    if deviceData.isVehicleDevice and deviceData:isVehicleDevice() then
+        local part = deviceData:getParent()
+        local vehicle = part and part:getVehicle()
+        if vehicle then
+            sound:setEmitter(vehicle:getEmitter())
         end
+    end
+    MaelstromMusic.Playback.Device.applyMode(sound, mode)
+    if mode == "world" then
+        sound:setPosAtObject(device)
     end
 end
 
