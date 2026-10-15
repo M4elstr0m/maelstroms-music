@@ -34,4 +34,7 @@ Revisit if the manual paste of the change note becomes a burden. The generator a
 
 ## Consequences
 
+The staging folder the uploader reads also contains the files the game generates at runtime, which list the stations of the maintainer's addons. `sync-mods.sh release` copies without them, always use it for an upload.
+
+
 `workshop.txt` must not be edited by hand and may be rewritten by the game after an upload (run `build`). The roadmap in `description.md` is still maintained by hand, separately from the one in `README.md`. Whether Steam renders BBCode in the change note field is unverified, `changenote --plain` is the fallback.
