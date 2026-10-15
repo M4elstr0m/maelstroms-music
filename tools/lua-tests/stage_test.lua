@@ -80,7 +80,16 @@ check("the search moves outward until the muffling matches", walled and walled.r
 
 Occlusion.direct = function() return 0 end
 local unmatched = Stage.place({}, origin, 1, 0, 1, { distance = 10, z = 0, occlusion = 0.9 })
-check("no acceptable square means no virtual placement", unmatched == nil)
+check("with no matching square the closest one is still used", unmatched ~= nil and not Stage.isMatch(unmatched) and near(unmatched.deficit, 0.9))
+check("an under muffled square loses volume to make up for it", near(Stage.mutedGain(0.5), 0.7) and near(Stage.mutedGain(0), 1) and Stage.mutedGain(1) < 0.5)
+check("an over muffled square keeps its volume", Stage.mutedGain(-0.4) == 1)
+
+local evaluations = 0
+Occlusion.direct = function() evaluations = evaluations + 1 return 0 end
+local first = Stage.place({}, origin, 1, 0, 1, { distance = 10, z = 0, occlusion = 0.9 })
+evaluations = 0
+local reused = Stage.place({}, origin, 1, 0, 1, { distance = 10, z = 0, occlusion = 0.9 }, first.candidate, false)
+check("a failed match is re-evaluated without a new search when asked", evaluations == 1 and reused.candidate == first.candidate)
 
 Occlusion.direct = function() return 0.2 end
 local sticky = Stage.place({}, origin, 1, 0, 1, { distance = 10, z = 0, occlusion = 0.2 })

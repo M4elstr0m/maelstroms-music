@@ -8,7 +8,7 @@ local MIN_STAGE_RADIUS = 2.2
 local MIN_ROLLOFF_DISTANCE = 2
 local FLOOR_HEIGHT = 3
 local MATCH_TOLERANCE = 0.02
-local ACCEPTABLE_MISMATCH = 0.25
+local UNDER_MUFFLED_VOLUME_LOSS = 0.6
 local MIN_GAIN_COMPENSATION = 0.5
 local MAX_GAIN_COMPENSATION = 1.2
 local PAN_DEAD_ZONE = 0.5
@@ -57,7 +57,7 @@ local function rolloffGain(distance)
     return MIN_ROLLOFF_DISTANCE / math.max(distance, MIN_ROLLOFF_DISTANCE)
 end
 
-local function candidatePosition(origin, forwardX, forwardY, side, candidate, radius)
+function MaelstromMusic.Playback.Stage.position(origin, forwardX, forwardY, side, candidate, radius)
     local azimuth = STAGE_ANGLE + candidate.angleOffset
     local along, across = math.cos(azimuth), math.sin(azimuth) * side
     local x = origin.x + radius * (forwardX * along - forwardY * across)
@@ -65,29 +65,47 @@ local function candidatePosition(origin, forwardX, forwardY, side, candidate, ra
     return x, y
 end
 
-function MaelstromMusic.Playback.Stage.place(observer, origin, forwardX, forwardY, side, target, previous)
+local function evaluate(observer, origin, forwardX, forwardY, side, target, candidate)
+    local radius = math.max(MIN_STAGE_RADIUS, target.distance + candidate.radiusOffset)
+    local x, y = MaelstromMusic.Playback.Stage.position(origin, forwardX, forwardY, side, candidate, radius)
+    local occlusion = MaelstromMusic.Playback.Occlusion.direct(observer, x, y, target.z)
+    return { x = x, y = y, radius = radius, candidate = candidate, deficit = target.occlusion - occlusion }
+end
+
+local function matches(placement)
+    return math.abs(placement.deficit) <= MATCH_TOLERANCE
+end
+
+function MaelstromMusic.Playback.Stage.place(observer, origin, forwardX, forwardY, side, target, previous, searchAgain)
     local best = nil
-    local ordered = previous and { previous } or {}
-    for _, candidate in ipairs(candidates) do
-        table.insert(ordered, candidate)
+    if previous then
+        best = evaluate(observer, origin, forwardX, forwardY, side, target, previous)
+        if matches(best) or searchAgain == false then
+            return best
+        end
     end
 
-    for _, candidate in ipairs(ordered) do
-        local radius = math.max(MIN_STAGE_RADIUS, target.distance + candidate.radiusOffset)
-        local x, y = candidatePosition(origin, forwardX, forwardY, side, candidate, radius)
-        local mismatch = math.abs(MaelstromMusic.Playback.Occlusion.direct(observer, x, y, target.z) - target.occlusion)
-        if not best or mismatch < best.mismatch then
-            best = { x = x, y = y, radius = radius, mismatch = mismatch, candidate = candidate }
+    for _, candidate in ipairs(candidates) do
+        local placement = evaluate(observer, origin, forwardX, forwardY, side, target, candidate)
+        if not best or math.abs(placement.deficit) < math.abs(best.deficit) then
+            best = placement
         end
-        if mismatch <= MATCH_TOLERANCE then
+        if matches(placement) then
             break
         end
     end
-
-    if best.mismatch > ACCEPTABLE_MISMATCH then
-        return nil
-    end
     return best
+end
+
+function MaelstromMusic.Playback.Stage.isMatch(placement)
+    return matches(placement)
+end
+
+function MaelstromMusic.Playback.Stage.mutedGain(deficit)
+    if deficit <= MATCH_TOLERANCE then
+        return 1
+    end
+    return 1 - UNDER_MUFFLED_VOLUME_LOSS * math.min(deficit, 1)
 end
 
 function MaelstromMusic.Playback.Stage.gainCompensation(realDistance, virtualRadius, heightOffset)

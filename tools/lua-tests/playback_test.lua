@@ -91,6 +91,7 @@ local function check(description, condition)
 end
 
 local function update() for _ = 1, 5 do Tick.onTick() end end
+local function settle() for _ = 1, 60 do clock = clock + 16; Tick.onRender() end end
 local function reset() Cache.entries = {}; calls = { clips = 0, positions = {}, stopped = {} }; volumes = {}; clock = 0; player.inVehicle = false end
 
 reset()
@@ -145,7 +146,7 @@ Occlusion.direct = function() return 0 end
 
 reset()
 local stageRadio = newDevice("world", 106, 100)
-Device.ensurePlaying(stageRadio); update()
+Device.ensurePlaying(stageRadio); update(); settle()
 local pair = Cache.entries[1]
 local Stage = MaelstromMusic.Playback.Stage
 local screenX, screenY = Stage.forward("screen", player)
@@ -156,6 +157,18 @@ check("the first copy is on the listener's left and the second on the right",
     Stage.pan(pair.sound.x - 100, pair.sound.y - 100, screenX, screenY) < -0.5 and Stage.pan(pair.companion.x - 100, pair.companion.y - 100, screenX, screenY) > 0.5)
 local expectedLeft, expectedRight = Stage.gains(Stage.pan(6, 0, screenX, screenY))
 check("the volumes follow the pan law", math.abs(volumes[1] / volumes[2] - expectedLeft / expectedRight) < 1e-6 and volumes[1] > 0)
+
+local Staging = MaelstromMusic.Playback.Staging
+local before = { pair.sound.x, pair.sound.y }
+local turned = { x = 100, y = 100, z = 0, forwardX = 0, forwardY = 1 }
+Staging.step(pair, turned, clock + 16)
+check("between searches the copies follow the look direction", pair.sound.x ~= before[1] or pair.sound.y ~= before[2])
+check("and stay on their own side of the new direction",
+    Stage.pan(pair.sound.x - 100, pair.sound.y - 100, 0, 1) < -0.5 and Stage.pan(pair.companion.x - 100, pair.companion.y - 100, 0, 1) > 0.5)
+
+local sideVolume = pair.companion.volume
+Staging.step(pair, { x = 100, y = 100, z = 0, forwardX = 1, forwardY = 0 }, clock + 32)
+check("a change of pan is ramped, not stepped", math.abs(pair.companion.volume - sideVolume) < sideVolume * 0.6)
 
 reset()
 Device.ensurePlaying(newDevice("held", 100, 100)); update()

@@ -79,9 +79,9 @@ local function applyMode(entry, mode)
     end
 end
 
-local function applyVolume(entry, mode, volume, listener)
+local function applyVolume(entry, mode, volume, listener, now)
     if listener and entry.companion then
-        MaelstromMusic.Playback.Staging.apply(entry, MaelstromMusic.Playback.Device.isPositional(mode), volume, listener)
+        MaelstromMusic.Playback.Staging.plan(entry, MaelstromMusic.Playback.Device.isPositional(mode), volume, listener, now)
         return
     end
     entry.sound:setVolume(volume)
@@ -95,7 +95,7 @@ local function dropoffVolume(entry, distance)
     return entry.deviceData:getDeviceVolume() * volumeModifier
 end
 
-local function updateEntry(entry, index, player, listener)
+local function updateEntry(entry, index, player, listener, now)
     if entry.orphanedAt then
         updateOrphan(entry, index)
         return
@@ -139,7 +139,7 @@ local function updateEntry(entry, index, player, listener)
         return
     end
 
-    applyVolume(entry, mode, carried and entry.deviceData:getDeviceVolume() or dropoffVolume(entry, distance), listener)
+    applyVolume(entry, mode, carried and entry.deviceData:getDeviceVolume() or dropoffVolume(entry, distance), listener, now)
 
     if not entry.sound:isPlaying() then
         finishedCounters[entry] = (finishedCounters[entry] or 0) + 1
@@ -171,6 +171,7 @@ function MaelstromMusic.Playback.Tick.onTick()
         return
     end
     local position = { x = player:getX(), y = player:getY(), z = player:getZ() }
+    local now = getTimestampMs()
     local listener = nil
     if MaelstromMusic.Playback.Device.isStaged() then
         listener = MaelstromMusic.Playback.Staging.listener(player, MaelstromMusic.Playback.ListenerFrame.current())
@@ -180,9 +181,26 @@ function MaelstromMusic.Playback.Tick.onTick()
 
     local entries = MaelstromMusic.Playback.Cache.entries
     for index = #entries, 1, -1 do
-        updateEntry(entries[index], index, position, listener)
+        updateEntry(entries[index], index, position, listener, now)
+    end
+end
+
+function MaelstromMusic.Playback.Tick.onRender()
+    local entries = MaelstromMusic.Playback.Cache.entries
+    local player = getPlayer()
+    if #entries == 0 or not player or not MaelstromMusic.Playback.Device.isStaged() then
+        return
+    end
+
+    local pose = MaelstromMusic.Playback.Staging.pose(player, MaelstromMusic.Playback.ListenerFrame.current())
+    local now = getTimestampMs()
+    for _, entry in ipairs(entries) do
+        if entry.companion and not entry.orphanedAt then
+            MaelstromMusic.Playback.Staging.step(entry, pose, now)
+        end
     end
 end
 
 Events.OnTick.Add(MaelstromMusic.Playback.Tick.onTick)
+Events.OnRenderTick.Add(MaelstromMusic.Playback.Tick.onRender)
 Events.OnRenderTick.Add(checkPlayerGone)
