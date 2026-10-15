@@ -3,6 +3,7 @@ require "Safe"
 require "Playback/Cache"
 require "Playback/Device"
 require "Playback/Discovery"
+require "Playback/Spatial"
 
 MaelstromMusic.Playback.Tick = {}
 
@@ -62,7 +63,7 @@ local function updateOrphan(entry, index)
     end
 end
 
-local function updateEntry(entry, index, playerX, playerY, playerZ, player)
+local function updateEntry(entry, index, playerX, playerY, playerZ)
     if entry.orphanedAt then
         updateOrphan(entry, index)
         return
@@ -89,26 +90,30 @@ local function updateEntry(entry, index, playerX, playerY, playerZ, player)
         entry.x, entry.y, entry.z = x, y, z
     end
 
-    local isHeld = entry.deviceData.isInventoryDevice and entry.deviceData:isInventoryDevice()
-    local inMyVehicle = entry.deviceData.isVehicleDevice and entry.deviceData:isVehicleDevice() and
-        player:getVehicle() and entry.deviceData:getParent() and entry.deviceData:getParent():getVehicle() == player:getVehicle()
+    local Device = MaelstromMusic.Playback.Device
+    local mode = Device.modeOf(entry.deviceData)
+    Device.applyMode(entry.sound, mode)
 
     local distance = math.sqrt((playerX - entry.x) ^ 2 + (playerY - entry.y) ^ 2 + (playerZ - entry.z) ^ 2)
+    local carried = mode == "held" or mode == "vehicleInside"
 
-    if not isHeld and not inMyVehicle and distance > MAX_RANGE then
+    if not carried and distance > MAX_RANGE then
         dropEntry(entry, index)
         return
     end
 
-    if isHeld or inMyVehicle then
-        entry.sound:set3D(false)
+    if carried then
         entry.sound:setVolume(entry.deviceData:getDeviceVolume())
     else
-        entry.sound:set3D(true)
         local dropoffRange = (MAX_RANGE - MIN_RANGE) * 0.2 + entry.deviceData:getDeviceVolume() * entry.sound.volumeModifier * 2.5 * (MAX_RANGE - MIN_RANGE) * 0.8
         local volumeModifier = ((MIN_RANGE + dropoffRange - distance) / dropoffRange)
         if volumeModifier < 0 then volumeModifier = 0 end
         if volumeModifier > 1 then volumeModifier = 1 end
+        if Device.isPositional(mode) then
+            Device.placeSound(entry.sound, entry.x, entry.y, entry.z)
+        else
+            volumeModifier = volumeModifier * MaelstromMusic.Playback.Spatial.centeredGain(distance)
+        end
         entry.sound:setVolume(entry.deviceData:getDeviceVolume() * volumeModifier)
     end
 
@@ -147,7 +152,7 @@ function MaelstromMusic.Playback.Tick.onTick()
 
     local entries = MaelstromMusic.Playback.Cache.entries
     for index = #entries, 1, -1 do
-        updateEntry(entries[index], index, playerX, playerY, playerZ, player)
+        updateEntry(entries[index], index, playerX, playerY, playerZ)
     end
 end
 
