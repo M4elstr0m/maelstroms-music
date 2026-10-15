@@ -33,6 +33,17 @@ class RepositoryTest(unittest.TestCase):
         self.assertNotIn("**", note)
         self.assertNotIn("[b]", note)
 
+    def test_the_github_release_title_names_the_version_and_the_item(self):
+        self.assertEqual(build.release_title(), f"v{build.mod_version()} - {build.load_item()['title']}")
+
+    def test_the_github_release_body_follows_the_template(self):
+        body = build.release_body()
+        self.assertNotIn("{{", body)
+        self.assertTrue(body.startswith(f'###### <h1 align="center">{build.release_title()}</h1>'))
+        self.assertEqual(body.count("######"), 4)
+        self.assertIn("stargazers", body)
+        self.assertIn(f"filedetails/?id={build.load_item()['id']}", body)
+
     def test_the_change_note_is_bbcode(self):
         note = build.change_note()
         self.assertTrue(note.startswith("[b]"))
