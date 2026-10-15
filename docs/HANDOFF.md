@@ -21,6 +21,10 @@ Menu theme and suppression, options persistence, background pause sliders, hide 
 - PR 39 (engine 3D again): head turn stereo, muffling through walls, car radio level when getting out, all with and without Viewpoint.
 - PR 37 (earlier mute at loading events): how much shorter the vanilla music overlap during loading is.
 
+## Stereo safe positioning (branch `feat/stereo-safe-spatialization`, issue 41)
+
+Root cause of "silent dead ahead and behind" on the maintainer's machine: the game mixes in 5.1 and the PulseAudio output keeps only the front left and right speakers (ADR 0009, `tools/fmod-lab/stage_probe.py`). Implemented as an opt-in setting: a left and a right emitter per device 40 degrees to each side, equal power pan, placed on squares with the same engine occlusion as the real one so the muffle stays. Code: `Playback/Occlusion.lua`, `Stage.lua`, `Staging.lua`, wiring in `Device.lua` and `Tick.lua`, options in `Options.lua`. Offline checks all pass (`occlusion_test.lua`, `stage_test.lua`, `playback_test.lua`). To verify in game: with the setting on, turn around a placed radio (left, centre, right, behind), another room, a car, held radio, toggle the setting while a station plays, with and without Viewpoint (the Player frame uses the character facing, check it is not mirrored). Version target 1.1.0 if it works.
+
 ## Open issues
 
 - 10: Viewpoint spatialization. Expected to work with true positions, needs a test. FMOD alone only dips 3 dB straight ahead or behind (offline probe), a bigger dip would come from occlusion (`isCouldSee`, Viewpoint patches vision) and should be investigated with the probes and the log.

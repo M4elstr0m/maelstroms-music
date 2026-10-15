@@ -254,6 +254,15 @@ Maelstrom's Music adds a page to the game's **Options > Mods** screen. Settings 
 | Show the example radio station | On      | Lists the bundled example station in radio and TV presets. Turn it off to hide it, it stays tunable by frequency and no other frequency changes. |
 | Shortest pause between tracks  | 30 s    | Background soundtrack only. After a track ends, the mod stays silent for a random time between the shortest and longest pause before the next track. |
 | Longest pause between tracks   | 80 s    | Background soundtrack only. Raised to the shortest pause if set lower. Set both to 0 for back to back tracks. |
+| Stereo safe positioning        | Off     | Radios and TVs only. Turn it on if a radio goes silent when you face it or turn your back to it. See [Radios and TVs go silent from some directions](#radios-and-tvs-go-silent-from-some-directions). |
+| Direction you listen from      | Automatic | Used by stereo safe positioning. Screen follows the screen like the base game, Player follows the way your character faces, Automatic uses Player when the Viewpoint mod is installed. |
+
+### Radios and TVs go silent from some directions
+
+> [!NOTE]
+> Some audio setups, typically PulseAudio or PipeWire on Linux with a stereo output, drop the centre and rear speakers of the game's 5.1 mix. Every 3D sound is then silent straight ahead and behind you, including the base game's own.
+
+Turn on **Stereo safe positioning** and each radio and TV is heard from the left and right only, panned by where the device is, so it stays audible from every direction. The muffling through walls, floors and out of sight is kept. Changing the setting restarts the track that is playing.
 
 ## Addon Mods
 
