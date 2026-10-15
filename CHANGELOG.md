@@ -4,6 +4,12 @@ All notable changes to Maelstrom's Music are listed here, newest first. The Work
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-15
+
+### Added
+- Stereo safe positioning (Options > Mods > Maelstrom's Music): keeps radios and TVs audible from every direction on audio setups that drop the centre and rear speakers of the game's surround mix, typically PulseAudio or PipeWire on Linux, and keeps the muffling through walls (#42)
+- Compatibility with the Project Viewpoint first person mod: the sound follows the camera (#42)
+
 ### Changed
 - Radios and TVs are heard at their real position: the sound moves from one ear to the other as you turn and is muffled through walls, as in the base game (#39)
 
