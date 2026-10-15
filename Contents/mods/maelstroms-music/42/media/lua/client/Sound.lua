@@ -145,6 +145,15 @@ function MaelstromMusic.Sound:setPos(x, y, z)
     end
 end
 
+function MaelstromMusic.Sound:moveTo(x, y, z)
+    self.x = x
+    self.y = y
+    self.z = z or 0
+    if self.emitter then
+        self.emitter:setPos(x, y, self.z)
+    end
+end
+
 function MaelstromMusic.Sound:setPosAtObject(obj)
     if not obj then
         return

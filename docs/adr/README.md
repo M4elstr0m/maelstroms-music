@@ -12,6 +12,7 @@ Each record states what was decided, why, what was tried and rejected, and the e
 | [0006](0006-game-over-music.md) | Game over music played by the mod | Accepted |
 | [0007](0007-settings-and-options.md) | Settings through the mod options page | Accepted |
 | [0008](0008-workflow-and-releases.md) | Workflow, merges and releases | Accepted |
+| [0009](0009-stereo-safe-positioning.md) | Stereo safe positioning | Accepted, opt-in |
 
 Current state and open work live in [../HANDOFF.md](../HANDOFF.md), verified engine facts in [../ENGINE_NOTES.md](../ENGINE_NOTES.md).
 | [0010](0010-workshop-page-from-single-sources.md) | Workshop page and change notes from single sources | Accepted |
