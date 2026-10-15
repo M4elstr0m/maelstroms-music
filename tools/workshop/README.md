@@ -16,8 +16,8 @@ One source for the Workshop page and one for the change notes, so nothing is cop
 2. Edit `workshop/description.md` if the page changes (the roadmap, for example).
 3. `python3 tools/workshop/build.py build`, then `python3 tools/workshop/build.py check`.
 4. `python3 tools/workshop/build.py changenote --version X.Y.Z --copy` puts the change note on the clipboard (`wl-copy`, `xclip` or `xsel`). Without `--copy` it is printed.
-5. Run the workspace `sync-mods.sh`, open the game's Workshop uploader (Mods > Workshop > Update existing item): the title, description, tags and visibility are filled from `workshop.txt`. On the change note step, paste the clipboard.
-6. Tag with `git tag -a vX.Y.Z` when asked. For GitHub release notes, `python3 tools/workshop/build.py release-notes --version X.Y.Z`.
+5. Run `sync-mods.sh release maelstroms-music` from the workspace folder (it copies like `sync` but leaves out `GeneratedRadios.txt` and `_radios_manifest.txt`, which the game generates from the maintainer's addons and must not be uploaded), open the game's Workshop uploader (Mods > Workshop > Update existing item): the title, description, tags and visibility are filled from `workshop.txt`. On the change note step, paste the clipboard.
+6. After the upload succeeded, tag with `git tag -a vX.Y.Z` when asked, run a normal `sync-mods.sh` again and start the game twice so it regenerates the two files. For GitHub release notes, `python3 tools/workshop/build.py release-notes --version X.Y.Z`.
 
 ## The Markdown subset
 
