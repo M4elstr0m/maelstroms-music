@@ -3,7 +3,7 @@ require "Log"
 require "Safe"
 require "Sound"
 require "VanillaMusic"
-require "Track"
+require "Playback/Track"
 require "VoicePreview"
 
 MaelstromMusic.MainMenu = {}

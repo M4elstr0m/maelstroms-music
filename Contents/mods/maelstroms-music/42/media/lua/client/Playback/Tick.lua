@@ -1,8 +1,8 @@
 require "Namespace"
 require "Safe"
-require "Cache"
-require "Device"
-require "Discovery"
+require "Playback/Cache"
+require "Playback/Device"
+require "Playback/Discovery"
 
 MaelstromMusic.Playback.Tick = {}
 

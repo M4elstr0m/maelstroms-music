@@ -1,5 +1,5 @@
 require "Namespace"
-require "Device"
+require "Playback/Device"
 
 MaelstromMusic.Playback.Discovery = {}
 
