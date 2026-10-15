@@ -9,6 +9,7 @@ MaelstromMusic.Playback.Tick = {}
 local MIN_RANGE = 5
 local MAX_RANGE = 75
 local DISCOVERY_INTERVAL = 100
+local ORPHAN_GRACE_MS = 5000
 
 local discoveryCounter = 0
 local tickCounter = 0
@@ -37,15 +38,45 @@ local function dropEntry(entry, index)
     finishedCounters[entry] = nil
 end
 
+local function isPresent(entry)
+    return entry.device ~= nil and MaelstromMusic.Playback.Device.isPresent(entry.device, entry.deviceData)
+end
+
 local function isStillTuned(entry)
-    if not entry.device or not MaelstromMusic.Playback.Device.isPresent(entry.device, entry.deviceData) then
-        return false
-    end
     return entry.deviceData:getIsTurnedOn() and
         MaelstromMusic.Playback.Cache.stationForFrequency(entry.deviceData:getChannel()) == entry.stationId
 end
 
+local function isVehicleDevice(entry)
+    return entry.deviceData.isVehicleDevice and entry.deviceData:isVehicleDevice()
+end
+
+local function orphanEntry(entry)
+    entry.orphanedAt = getTimestampMs()
+    entry.sound:setVolume(0)
+end
+
+local function updateOrphan(entry, index)
+    if getTimestampMs() - entry.orphanedAt > ORPHAN_GRACE_MS or not entry.sound:isPlaying() then
+        dropEntry(entry, index)
+    end
+end
+
 local function updateEntry(entry, index, playerX, playerY, playerZ, player)
+    if entry.orphanedAt then
+        updateOrphan(entry, index)
+        return
+    end
+
+    if not isPresent(entry) then
+        if isVehicleDevice(entry) then
+            dropEntry(entry, index)
+        else
+            orphanEntry(entry)
+        end
+        return
+    end
+
     if not isStillTuned(entry) then
         dropEntry(entry, index)
         return
