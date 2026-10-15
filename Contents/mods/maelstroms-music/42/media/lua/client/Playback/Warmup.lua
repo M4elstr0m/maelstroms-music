@@ -13,16 +13,17 @@ local queuedNames = {}
 local phase = PHASE_MENU
 
 local function warmTrack(soundName)
-    local gameSound = GameSounds.getSound(soundName)
-    if not gameSound then
-        return
+    if not GameSounds.isKnownSound(soundName) then
+        return false
     end
+    local gameSound = GameSounds.getSound(soundName)
     local emitter = IsoWorld.instance:getFreeEmitter()
     local id = emitter:playClip(gameSound:getRandomClip(), nil)
     if id then
         emitter:setVolume(id, 0)
         emitter:stopSound(id)
     end
+    return true
 end
 
 function MaelstromMusic.Playback.Warmup.isWarmed(soundName)
@@ -44,7 +45,8 @@ local function onRenderTick()
 
     local soundName = table.remove(queue, 1)
     queuedNames[soundName] = nil
-    if pcall(warmTrack, soundName) then
+    local ok, warmedNow = pcall(warmTrack, soundName)
+    if ok and warmedNow then
         warmed[soundName] = true
     end
 end

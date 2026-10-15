@@ -45,11 +45,11 @@ function MaelstromMusic.Sound:play(sound)
         self.emitter = IsoWorld.instance:getFreeEmitter()
         self.emitter:setPos(self.x, self.y, self.z)
     end
-    local gameSound = GameSounds.getSound(sound)
-    if not gameSound then
+    if not GameSounds.isKnownSound(sound) then
         MaelstromMusic.Log.write("sound '" .. tostring(sound) .. "' isn't registered, can't play it.")
         return
     end
+    local gameSound = GameSounds.getSound(sound)
     local gameSoundClip = gameSound:getRandomClip()
     self.id = self.emitter:playClip(gameSoundClip, nil)
     self.stopWhenFaded = false
