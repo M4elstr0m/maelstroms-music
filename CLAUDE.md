@@ -6,6 +6,8 @@ The mod ID is `maelstromsmusic`. The Lua namespace is the single global `Maelstr
 
 Deeper engine knowledge (quirks, confirmed limitations, reverted approaches) lives in @docs/ENGINE_NOTES.md. Read it before touching anything audio related.
 
+Decisions and their reasoning are architecture decision records in `docs/adr/` (index in `docs/adr/README.md`). Read the relevant one before changing its area, and add or supersede a record when a decision changes. Current state, what is verified and what is open: @docs/HANDOFF.md, update it at the end of every session.
+
 ## Repository layout
 
 ```txt
@@ -14,7 +16,8 @@ Contents/mods/maelstroms-music/
   common/media/{radios,televisions,backgrounds,mainmenu,deaths}/   user content (JSON + folders)
 workshop.txt, preview.png    Steam Workshop item metadata (repo root, outside Contents/)
 README.md, ADDONS.md         user and addon author documentation
-docs/                        developer notes (not shipped to the Workshop)
+docs/                        developer notes: ENGINE_NOTES.md, HANDOFF.md, adr/ (not shipped to the Workshop)
+tools/fmod-lab/              offline FMOD probes (pan and occlusion), see its README
 ```
 
 Only `Contents/` is uploaded to the Workshop. Everything else in the repo is development material.
@@ -28,7 +31,7 @@ Only `Contents/` is uploaded to the Workshop. Everything else in the repo is dev
 - `shared/Scanner/`: `Scanner.lua` discovers stations from the base mod and addons, merges `mergeTracks` stations, assigns frequencies and regenerates the sound script when the manifest changed. `Station.lua` validates one JSON file. `Manifest.lua` builds the generated sound script, the diffable manifest and the runtime station tables (including `sequences` gating).
 - `shared/Addons/`: addon discovery (`getActivatedMods`, `require=maelstromsmusic`, `maelstroms-music-addon.json` marker with `apiVersion`).
 - `client/Sound.lua`: thin wrapper over an FMOD emitter with manual fades.
-- `client/Playback/`: radio and TV engine. `Hooks.lua` wraps vanilla radio actions and preset loading, `Device.lua` starts tracks (2 track lookahead), `Tick.lua` handles range, volume and track end, `Discovery.lua` finds powered devices near the player, `Warmup.lua` pre-decodes tracks, `Cache.lua` and `DeviceRange.lua` hold state helpers.
+- `client/Playback/`: radio and TV engine. `Hooks.lua` wraps vanilla radio actions and preset loading, `Device.lua` starts tracks (2 track lookahead), decides a device's mode and adopts muted entries, `Tick.lua` handles range, volume, muting of vanished devices and track end, `Discovery.lua` finds powered devices near the player, `Warmup.lua` pre-decodes tracks, `Cache.lua` and `DeviceRange.lua` hold state helpers.
 - `client/Backgrounds/`: `Director.lua` is the adaptive soundtrack state machine, `Mood.lua` computes the 0 to 10 drama value from zombie counts.
 - `client/MainMenu.lua`: main menu theme, carried through the loading screen.
 - `client/VanillaMusic.lua`: claim based suppression of the vanilla soundtrack.
