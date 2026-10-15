@@ -289,6 +289,7 @@ See [ADDONS.md](ADDONS.md) for the full addon creation guide.
 ## Limitations
 
 - **No cross-player sync:** in multiplayer, two players tuned to the same station may hear different tracks from it at the same moment (each player's game picks independently since it is based on local folders).
+- **First person mods:** mods that replace the audio listener (such as Viewpoint) make the direction of a radio or TV unknown, so while one is active they play centered, with the usual fading with distance.
 - **Large libraries:** with very large libraries (100+ tracks across everything combined), only the first 100 get pre-loaded at boot to keep memory use in check. Anything beyond 100, just loads the first time it's actually played instead, which may cause a brief lag on that first play.
 
 ## Roadmap
