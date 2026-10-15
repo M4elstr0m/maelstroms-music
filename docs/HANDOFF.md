@@ -29,6 +29,6 @@ Menu theme and suppression, options persistence, background pause sliders, hide 
 
 ## Working notes
 
-- Offline checks used so far: `luac5.1 -p` on every Lua file, stubbed engine runs of the playback logic (placed, picked up, adopted, TV staying removed, car radio changing state), and `tools/fmod-lab` for anything about sound.
+- Offline checks: `luac5.1 -p` on every Lua file, `lua5.1 tools/lua-tests/playback_test.lua` (stubbed engine: placed, picked up, adopted, TV staying removed, car radio changing state), and `tools/fmod-lab` for anything about sound.
 - The permission classifier blocks `git reset --hard`, `git stash`, a `for` loop around `gh pr merge`; use follow up commits and one merge per command. A GitHub 502 can leave a merge stuck "in progress" for about a minute.
 - Written output follows the maintainer's global rules: no em dash, no spaced hyphen as a connector, no attribution lines, anonymized content.

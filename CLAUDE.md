@@ -18,6 +18,7 @@ workshop.txt, preview.png    Steam Workshop item metadata (repo root, outside Co
 README.md, ADDONS.md         user and addon author documentation
 docs/                        developer notes: ENGINE_NOTES.md, HANDOFF.md, adr/ (not shipped to the Workshop)
 tools/fmod-lab/              offline FMOD probes (pan and occlusion), see its README
+tools/lua-tests/             stubbed engine tests of the playback logic
 ```
 
 Only `Contents/` is uploaded to the Workshop. Everything else in the repo is development material.
@@ -69,7 +70,7 @@ Lua runs on Kahlua (a Lua 5.1 style VM embedded in the game), not stock Lua:
 2. Do not guess engine behaviour. Decompile the game and read the bytecode (see "Decompiling the game"). Do not hesitate to do this, it is how most real root causes were found.
 3. After a fix, state its blast radius on the other audio systems (radios, backgrounds, main menu). Several early fixes regressed other systems.
 4. Check @docs/ENGINE_NOTES.md "Approaches that failed" before proposing a design, to avoid repeating a dead end.
-5. Syntax check every edited Lua file: `luac5.1 -p <file>`. There is no automated test suite, so verify behaviour in game and read the console log.
+5. Syntax check every edited Lua file: `luac5.1 -p <file>`, and run `lua5.1 tools/lua-tests/playback_test.lua` from the repository root (stubbed engine, assertions on the playback logic). Anything about sound is checked with `tools/fmod-lab`. Then verify in game and read the console log.
 
 ## Decompiling the game
 
