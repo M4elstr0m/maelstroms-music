@@ -1,6 +1,6 @@
 version=1
 id=3775149796
-title=Maelstrom's Music [B42.20]
+title=Maelstrom's Music [B42.21]
 tags=Build 42;Audio;Framework;Multiplayer;QoL;WIP
 visibility=public
 description=[h1]Maelstrom's Music[/h1]
@@ -31,7 +31,7 @@ description=
 description=[h2]Compatibility & Save Games[/h2]
 description=[list]
 description=[*][b]Save Games:[/b] Safe to add or remove mid-save.
-description=[*][b]Multiplayer:[/b] Fully compatible (Build 42.20+). [i]Note: Track selection is client-side, so different players tuned into the same station may hear different songs at the same moment.[/i]
+description=[*][b]Multiplayer:[/b] Fully compatible (Build 42.21+). [i]Note: Track selection is client-side, so different players tuned into the same station may hear different songs at the same moment.[/i]
 description=[*][b]Other Mods:[/b] Zero vanilla soundbank files are modified, minimizing mod conflicts.
 description=[/list]
 description=
@@ -60,8 +60,9 @@ description=[*]✅ v1.0.3 - Allow multiple addons to share the same radio / TV s
 description=[*]✅ v1.0.3 - Add delay between Main Menu music replays & allow multiple main menu music
 description=[*]✅ v1.0.6 - Compatibility with .flac files
 description=[*]✅ v1.0.7 - Allow ordering even with shuffle=true
-description=[*]⬜ Music VHS and CDs (vanilla integrated)
+description=[*]✅ v1.1.0 - Fixes for issues reported by users, Options, and Viewpoint Project compatibility
 description=[*]⬜ Display music title when it starts playing on radio
+description=[*]⬜ [NOT PLANNED FOR NOW] Music VHS and CDs (vanilla integrated)
 description=[/list]
 description=
 description=[hr][/hr]
