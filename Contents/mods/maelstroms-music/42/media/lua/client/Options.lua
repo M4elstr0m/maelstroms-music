@@ -32,11 +32,23 @@ function MaelstromMusic.Options.backgroundGapSeconds()
     return minSeconds, math.max(minSeconds, maxSeconds)
 end
 
+local function moveToFront(createdPage)
+    local pages = PZAPI.ModOptions.Data
+    for index, existing in ipairs(pages) do
+        if existing == createdPage then
+            table.remove(pages, index)
+            break
+        end
+    end
+    table.insert(pages, 1, createdPage)
+end
+
 local function install()
     if page or not PZAPI then
         return
     end
     page = PZAPI.ModOptions:create(MaelstromMusic.MOD_ID, "UI_MaelstromMusic_Title")
+    moveToFront(page)
     page:addTitle("UI_MaelstromMusic_StationsTitle")
     page:addTickBox(SHOW_EXAMPLE_STATION, "UI_MaelstromMusic_ShowExampleStation", true, "UI_MaelstromMusic_ShowExampleStation_tt")
     page:addTitle("UI_MaelstromMusic_BackgroundsTitle")
