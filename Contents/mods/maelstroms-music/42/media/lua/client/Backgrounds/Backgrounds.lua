@@ -1,3 +1,3 @@
 require "Namespace"
-require "Mood"
-require "Director"
+require "Backgrounds/Mood"
+require "Backgrounds/Director"

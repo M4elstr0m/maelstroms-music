@@ -1,7 +1,7 @@
 require "Namespace"
-require "Cache"
-require "Device"
-require "DeviceRange"
+require "Playback/Cache"
+require "Playback/Device"
+require "Playback/DeviceRange"
 require "Options"
 
 MaelstromMusic.Playback.Hooks = {}

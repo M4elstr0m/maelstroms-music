@@ -1,7 +1,7 @@
 require "Namespace"
 require "Log"
 require "Safe"
-require "AddonManifest"
+require "Addons/AddonManifest"
 
 MaelstromMusic.Addons.Discovery = {}
 
