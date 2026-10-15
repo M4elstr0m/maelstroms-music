@@ -24,7 +24,7 @@ Without any addon installed, this mod only adds on his own a sample radio statio
 
 ## Compatibility & Save Games
 - **Save Games:** Safe to add or remove mid-save.
-- **Multiplayer:** Fully compatible (Build 42.21+). *Note: Track selection is client-side, so different players tuned into the same station may hear different songs at the same moment.*
+- **Multiplayer:** Fully compatible (Build 42.20+). *Note: Track selection is client-side, so different players tuned into the same station may hear different songs at the same moment.*
 - **Other Mods:** Zero vanilla soundbank files are modified, minimizing mod conflicts.
 
 Please report your bugs & suggestions on Github (see above link).
