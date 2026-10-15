@@ -16,7 +16,7 @@ One source for the Workshop page and one for the change notes, so nothing is cop
 2. Edit `workshop/description.md` if the page changes (the roadmap, for example).
 3. `python3 tools/workshop/build.py build`, then `python3 tools/workshop/build.py check`.
 4. `python3 tools/workshop/build.py changenote --version X.Y.Z --copy` puts the change note on the clipboard (`wl-copy`, `xclip` or `xsel`). Without `--copy` it is printed.
-5. Run `sync-mods.sh release maelstroms-music` from the workspace folder (it copies like `sync` but leaves out `GeneratedRadios.txt` and `_radios_manifest.txt`, which the game generates from the maintainer's addons and must not be uploaded), open the game's Workshop uploader (Mods > Workshop > Update existing item): the title, description, tags and visibility are filled from `workshop.txt`. On the change note step, paste the clipboard.
+5. Run `sync-mods.sh release maelstroms-music` from the workspace folder (if the game's uploader fails, see the last section) (it copies like `sync` but leaves out `GeneratedRadios.txt` and `_radios_manifest.txt`, which the game generates from the maintainer's addons and must not be uploaded), open the game's Workshop uploader (Mods > Workshop > Update existing item): the title, description, tags and visibility are filled from `workshop.txt`. On the change note step, paste the clipboard.
 6. After the upload succeeded, tag with `git tag -a vX.Y.Z` when asked, run a normal `sync-mods.sh` again and start the game twice so it regenerates the two files. For GitHub release notes, `python3 tools/workshop/build.py release-notes --version X.Y.Z`.
 
 ## The Markdown subset
@@ -47,6 +47,12 @@ Line breaks are kept exactly as written, so there is no paragraph reflow. A blan
 - The uploaded folder is `<item>/Contents` and the preview is `<item>/preview.png`. Valid tags are the lines of `media/WorkshopTags.txt` in the game folder, and `build.py` rejects any other.
 - Whether Steam renders BBCode in the change note field is not documented. If it shows the tags literally, use `changenote --plain`.
 
-## Optional: skipping the dialog with SteamCMD
+## Publishing without the game's dialog
 
-Not implemented, recorded in [ADR 0010](../../docs/adr/0010-workshop-page-from-single-sources.md) with the reasons.
+On the maintainer's Linux machine the game's uploader failed on a fresh start with the generic message "error requesting Steam to update the item", while every Steam call it makes succeeds when made from outside the game. `steam_publish.py` makes the same calls through the game's own `libsteam_api.so` and the Steam session that is logged in (no password), then submits and prints Steam's `EResult` (1 is OK, anything else is Steam's reason).
+
+1. `sync-mods.sh release maelstroms-music`, immediately before the next step. A running game regenerates `GeneratedRadios.txt` and `_radios_manifest.txt` inside the upload folder, and the script refuses to run while they are there.
+2. `python3 tools/workshop/steam_publish.py` is a dry run: it prints the item, the title and the sizes, prepares the update and submits nothing.
+3. `python3 tools/workshop/steam_publish.py --submit` publishes the title, description (with the `Workshop ID` and `Mod ID` lines the game would append), tags, visibility, content, preview and the change note of the `mod.info` version. Only the changed files are transferred.
+
+`PZ_NATIVES` points at the game's `natives` folder when the game is not in the default Steam library. SteamCMD is not used, see [ADR 0010](../../docs/adr/0010-workshop-page-from-single-sources.md).

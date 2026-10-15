@@ -1,6 +1,6 @@
 # 0010 Workshop page and change notes from single sources
 
-Status: Accepted. The in game uploader stays the publishing step, SteamCMD is recorded as an option.
+Status: Accepted. The in game uploader is the default publishing step, `tools/workshop/steam_publish.py` is the fallback that was needed for 1.1.0, SteamCMD is recorded as an option and not adopted.
 
 ## Context
 
@@ -31,6 +31,10 @@ What the game does (read from `WorkshopSubmitScreen.lua` and the decompiled `Ste
 - A wrong run publishes to a public item, and it cannot be tested without doing so.
 
 Revisit if the manual paste of the change note becomes a burden. The generator already produces everything the VDF needs.
+
+## The Steam API fallback
+
+For 1.1.0 the game's uploader failed on a fresh start with "error requesting Steam to update the item" and no further detail (its native log is only visible with `-debuglog=ZNet`). A probe that made the same `ISteamUGC` calls from outside the game, without submitting, showed that Steam accepted the account, the files, the text, the tags and the preview, so the cause was inside the game's process and was never identified. `steam_publish.py` (started with the maintainer's explicit go ahead) uses the game's `libsteam_api.so` and the logged in Steam session: no password, no SteamCMD. It reproduces what the game does (description plus `Workshop ID` and `Mod ID` lines, tags, visibility, content, preview, change note) and prints Steam's `EResult` instead of a generic message. The 1.1.0 submit returned `EResult 1` and the public page showed the new title and description.
 
 ## Consequences
 
