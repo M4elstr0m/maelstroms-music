@@ -62,7 +62,6 @@ description=[*]✅ v1.0.6 - Compatibility with .flac files
 description=[*]✅ v1.0.7 - Allow ordering even with shuffle=true
 description=[*]⬜ Music VHS and CDs (vanilla integrated)
 description=[*]⬜ Display music title when it starts playing on radio
-description=
 description=[/list]
 description=
 description=[hr][/hr]
