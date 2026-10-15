@@ -11,10 +11,10 @@ function MaelstromMusic.Scanner.Manifest.sortedStationIds(stations)
     return stationIds
 end
 
-local SCRIPT_SCHEMA_VERSION = 3
+local SCRIPT_SCHEMA_VERSION = 4
 
-local SPATIAL_DISTANCE_MIN = 30
-local SPATIAL_DISTANCE_MAX = 225
+local SPATIAL_DISTANCE_MIN = 2
+local SPATIAL_DISTANCE_MAX = 75
 local FLAT_DISTANCE_MAX = 75
 
 function MaelstromMusic.Scanner.Manifest.buildText(stations, stationIds)
@@ -26,7 +26,7 @@ function MaelstromMusic.Scanner.Manifest.buildText(stations, stationIds)
     return table.concat(lines, "\n")
 end
 
--- Distances are in third-of-a-tile units. Only world devices are 3D, a 3D sound ticking without a player crashes.
+-- Distances are in tiles. Only world devices are 3D, a 3D sound ticking without a player crashes.
 local function spatialProperties(kind)
     if kind == "radio" or kind == "television" then
         return "true", "\t\t\tdistanceMin = " .. SPATIAL_DISTANCE_MIN .. ",\n\t\t\tdistanceMax = " .. SPATIAL_DISTANCE_MAX .. ",\n"
