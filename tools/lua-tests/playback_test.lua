@@ -27,8 +27,8 @@ local function newEmitter(name)
     return emitter
 end
 
-local freeEmitter, vehicleEmitter = newEmitter("free"), newEmitter("vehicle")
-IsoWorld = { instance = { getFreeEmitter = function() return freeEmitter end } }
+local vehicleEmitter = newEmitter("vehicle")
+IsoWorld = { instance = { getFreeEmitter = function() return newEmitter("free") end } }
 
 local vehicle = {
     getEmitter = function() return vehicleEmitter end,
@@ -41,6 +41,9 @@ function player:getX() return 100 end
 function player:getY() return 100 end
 function player:getZ() return 0 end
 function player:getVehicle() return self.inVehicle and vehicle or nil end
+function player:getCurrentSquare() return nil end
+function player:getPlayerNum() return 0 end
+function player:getForwardDirection() return { getX = function() return 1 end, getY = function() return 0 end } end
 getPlayer = function() return player end
 
 local function newDeviceData(kind)
@@ -77,6 +80,9 @@ require "Playback/Device"
 require "Playback/Tick"
 
 local Device, Cache, Tick = MaelstromMusic.Playback.Device, MaelstromMusic.Playback.Cache, MaelstromMusic.Playback.Tick
+local Occlusion = MaelstromMusic.Playback.Occlusion
+local staged = false
+MaelstromMusic.Options.stereoSafePositioning = function() return staged end
 local failures = 0
 
 local function check(description, condition)
@@ -133,6 +139,49 @@ origin.present = false; update()
 local before = calls.clips
 Device.ensurePlaying(newDevice("world", 300, 300))
 check("a radio far from a muted entry starts its own track", calls.clips == before + 1)
+
+staged = true
+Occlusion.direct = function() return 0 end
+
+reset()
+local stageRadio = newDevice("world", 106, 100)
+Device.ensurePlaying(stageRadio); update()
+local pair = Cache.entries[1]
+local Stage = MaelstromMusic.Playback.Stage
+local screenX, screenY = Stage.forward("screen", player)
+check("a staged radio plays two copies of the track", calls.clips == 2 and pair.companion ~= nil)
+check("both copies are positional", pair.sound.sound3D == true and pair.companion.sound3D == true)
+check("the copies are placed away from the real position", pair.sound.x ~= 106 and pair.companion.x ~= 106)
+check("the first copy is on the listener's left and the second on the right",
+    Stage.pan(pair.sound.x - 100, pair.sound.y - 100, screenX, screenY) < -0.5 and Stage.pan(pair.companion.x - 100, pair.companion.y - 100, screenX, screenY) > 0.5)
+local expectedLeft, expectedRight = Stage.gains(Stage.pan(6, 0, screenX, screenY))
+check("the volumes follow the pan law", math.abs(volumes[1] / volumes[2] - expectedLeft / expectedRight) < 1e-6 and volumes[1] > 0)
+
+reset()
+Device.ensurePlaying(newDevice("held", 100, 100)); update()
+local heldPair = Cache.entries[1]
+check("a held staged radio plays flat on the first copy", heldPair.sound.sound3D == false and volumes[1] > 0)
+check("and keeps the second copy silent", volumes[2] == 0 and heldPair.companion.sound3D == false)
+
+reset()
+local placedPair = newDevice("world", 100, 100)
+Device.ensurePlaying(placedPair); update()
+placedPair.present = false; update()
+check("a picked up staged radio mutes both copies", volumes[1] == 0 and volumes[2] == 0)
+
+reset()
+local toggled = newDevice("world", 110, 100)
+Device.ensurePlaying(toggled); update()
+staged = false; update()
+check("switching the option off drops the second copy", Cache.entries[1].companion == nil)
+staged = true; update()
+check("switching it on again restores the pair", Cache.entries[1].companion ~= nil)
+
+reset()
+player.inVehicle = false
+Device.ensurePlaying(newDevice("vehicle", 106, 100)); update()
+local stagedCar = Cache.entries[1]
+check("a staged car radio does not borrow the vehicle emitter", stagedCar.sound.emitter ~= vehicleEmitter and stagedCar.companion.emitter ~= vehicleEmitter)
 
 print(failures == 0 and "all checks passed" or (failures .. " check(s) failed"))
 os.exit(failures == 0 and 0 or 1)

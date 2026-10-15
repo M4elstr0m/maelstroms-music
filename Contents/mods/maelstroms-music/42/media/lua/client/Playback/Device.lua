@@ -1,6 +1,7 @@
 require "Namespace"
 require "Log"
 require "Sound"
+require "Options"
 require "Playback/Cache"
 require "Playback/Track"
 require "Playback/Warmup"
@@ -114,19 +115,38 @@ function MaelstromMusic.Playback.Device.applyMode(sound, mode)
     end
 end
 
-local function configureSound(sound, device, deviceData)
+local function configureSound(sound, device, deviceData, staged)
     local mode = MaelstromMusic.Playback.Device.modeOf(deviceData)
-    if deviceData.isVehicleDevice and deviceData:isVehicleDevice() then
+    if not staged and deviceData.isVehicleDevice and deviceData:isVehicleDevice() then
         local part = deviceData:getParent()
         local vehicle = part and part:getVehicle()
         if vehicle then
             sound:setEmitter(vehicle:getEmitter())
+            sound.sharedEmitter = true
         end
     end
     MaelstromMusic.Playback.Device.applyMode(sound, mode)
     if mode == "world" then
         sound:setPosAtObject(device)
     end
+end
+
+function MaelstromMusic.Playback.Device.stopSounds(entry)
+    entry.sound:stop()
+    if entry.companion then
+        entry.companion:stop()
+    end
+end
+
+function MaelstromMusic.Playback.Device.muteSounds(entry)
+    entry.sound:setVolume(0)
+    if entry.companion then
+        entry.companion:setVolume(0)
+    end
+end
+
+function MaelstromMusic.Playback.Device.isStaged()
+    return MaelstromMusic.Options.stereoSafePositioning()
 end
 
 local function findOrphan(stationId, deviceData, x, y)
@@ -150,10 +170,43 @@ local function adoptOrphan(stationId, device, deviceData)
     entry.deviceData = deviceData
     entry.orphanedAt = nil
     entry.x, entry.y, entry.z = x or entry.x, y or entry.y, z or entry.z
-    configureSound(entry.sound, device, deviceData)
+    configureSound(entry.sound, device, deviceData, entry.companion ~= nil)
+    if entry.companion then
+        configureSound(entry.companion, device, deviceData, true)
+    end
     entry.sound:setVolume(deviceData:getDeviceVolume())
     MaelstromMusic.Log.write("'" .. MaelstromMusic.Broadcasts[stationId].title .. "' keeps playing on the moved device.")
     return true
+end
+
+local function startSound(sound, trackName, station, volume)
+    sound:setVolume(volume)
+    sound:setFadeLevel(station.fade and 0 or 1)
+    sound:play(trackName)
+    if station.fade then
+        sound:fadeTo(1, FADE_IN_MS)
+    end
+end
+
+local function releaseSharedEmitter(sound)
+    if sound.sharedEmitter then
+        sound:stop()
+        sound:setEmitter(nil)
+        sound.sharedEmitter = false
+    end
+end
+
+local function prepareCompanion(entry, device, deviceData, staged)
+    if not staged then
+        if entry.companion then
+            entry.companion:stop()
+            entry.companion = nil
+        end
+        return
+    end
+    entry.companion = entry.companion or MaelstromMusic.Sound:new()
+    releaseSharedEmitter(entry.companion)
+    configureSound(entry.companion, device, deviceData, true)
 end
 
 function MaelstromMusic.Playback.Device.playStation(stationId, device)
@@ -162,9 +215,14 @@ function MaelstromMusic.Playback.Device.playStation(stationId, device)
         return
     end
 
+    local staged = MaelstromMusic.Playback.Device.isStaged()
     local existing = MaelstromMusic.Playback.Cache.get(deviceData)
-    local sound = existing and existing.sound or MaelstromMusic.Sound:new()
-    configureSound(sound, device, deviceData)
+    local entry = existing or {}
+    local sound = entry.sound or MaelstromMusic.Sound:new()
+    if staged then
+        releaseSharedEmitter(sound)
+    end
+    configureSound(sound, device, deviceData, staged)
 
     local station = MaelstromMusic.Broadcasts[stationId]
     ensurePicks(stationId, station)
@@ -184,27 +242,27 @@ function MaelstromMusic.Playback.Device.playStation(stationId, device)
 
     MaelstromMusic.Log.write("'" .. station.title .. "' now playing: " .. tostring(station.trackFiles[trackIndex]))
 
-    sound:setVolume(deviceData:getDeviceVolume())
-    sound:setFadeLevel(station.fade and 0 or 1)
-    sound:play(trackName)
-    if station.fade then
-        sound:fadeTo(1, FADE_IN_MS)
+    entry.sound = sound
+    prepareCompanion(entry, device, deviceData, staged)
+
+    local volume = deviceData:getDeviceVolume()
+    startSound(sound, trackName, station, volume)
+    if entry.companion then
+        startSound(entry.companion, trackName, station, 0)
     end
 
     local x, y, z = locate(device, deviceData)
 
-    local entry = existing or {}
     entry.orphanedAt = nil
     entry.device = device
     entry.deviceData = deviceData
     entry.stationId = stationId
     entry.trackIndex = trackIndex
-    entry.sound = sound
     entry.x = x or entry.x or 0
     entry.y = y or entry.y or 0
     entry.z = z or entry.z or 0
 
-    if not MaelstromMusic.Playback.Cache.get(deviceData) then
+    if not existing then
         MaelstromMusic.Playback.Cache.add(entry)
     end
 end

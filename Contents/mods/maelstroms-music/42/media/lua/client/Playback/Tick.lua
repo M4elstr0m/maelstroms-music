@@ -3,6 +3,8 @@ require "Safe"
 require "Playback/Cache"
 require "Playback/Device"
 require "Playback/Discovery"
+require "Playback/Staging"
+require "Options"
 
 MaelstromMusic.Playback.Tick = {}
 
@@ -20,7 +22,7 @@ local function stopAllEntries()
     for index = #entries, 1, -1 do
         local entry = entries[index]
         MaelstromMusic.Safe.call("could not stop a cached device sound", function()
-            entry.sound:stop()
+            MaelstromMusic.Playback.Device.stopSounds(entry)
         end)
         MaelstromMusic.Playback.Cache.removeAt(index)
     end
@@ -33,7 +35,7 @@ local function checkPlayerGone()
 end
 
 local function dropEntry(entry, index)
-    entry.sound:stop()
+    MaelstromMusic.Playback.Device.stopSounds(entry)
     MaelstromMusic.Playback.Cache.removeAt(index)
     finishedCounters[entry] = nil
 end
@@ -53,7 +55,7 @@ end
 
 local function orphanEntry(entry)
     entry.orphanedAt = getTimestampMs()
-    entry.sound:setVolume(0)
+    MaelstromMusic.Playback.Device.muteSounds(entry)
 end
 
 local function updateOrphan(entry, index)
@@ -62,7 +64,38 @@ local function updateOrphan(entry, index)
     end
 end
 
-local function updateEntry(entry, index, playerX, playerY, playerZ)
+local function fadeSounds(entry)
+    entry.sound:updateFade()
+    if entry.companion then
+        entry.companion:updateFade()
+    end
+end
+
+local function applyMode(entry, mode)
+    local Device = MaelstromMusic.Playback.Device
+    Device.applyMode(entry.sound, mode)
+    if entry.companion then
+        Device.applyMode(entry.companion, mode)
+    end
+end
+
+local function applyVolume(entry, mode, volume, listener)
+    if listener and entry.companion then
+        MaelstromMusic.Playback.Staging.apply(entry, MaelstromMusic.Playback.Device.isPositional(mode), volume, listener)
+        return
+    end
+    entry.sound:setVolume(volume)
+end
+
+local function dropoffVolume(entry, distance)
+    local dropoffRange = (MAX_RANGE - MIN_RANGE) * 0.2 + entry.deviceData:getDeviceVolume() * entry.sound.volumeModifier * 2.5 * (MAX_RANGE - MIN_RANGE) * 0.8
+    local volumeModifier = ((MIN_RANGE + dropoffRange - distance) / dropoffRange)
+    if volumeModifier < 0 then volumeModifier = 0 end
+    if volumeModifier > 1 then volumeModifier = 1 end
+    return entry.deviceData:getDeviceVolume() * volumeModifier
+end
+
+local function updateEntry(entry, index, player, listener)
     if entry.orphanedAt then
         updateOrphan(entry, index)
         return
@@ -82,7 +115,12 @@ local function updateEntry(entry, index, playerX, playerY, playerZ)
         return
     end
 
-    entry.sound:updateFade()
+    if (entry.companion ~= nil) ~= MaelstromMusic.Playback.Device.isStaged() then
+        MaelstromMusic.Playback.Device.playStation(entry.stationId, entry.device)
+        return
+    end
+
+    fadeSounds(entry)
 
     local x, y, z = MaelstromMusic.Playback.Device.locate(entry.device, entry.deviceData)
     if x then
@@ -91,9 +129,9 @@ local function updateEntry(entry, index, playerX, playerY, playerZ)
 
     local Device = MaelstromMusic.Playback.Device
     local mode = Device.modeOf(entry.deviceData)
-    Device.applyMode(entry.sound, mode)
+    applyMode(entry, mode)
 
-    local distance = math.sqrt((playerX - entry.x) ^ 2 + (playerY - entry.y) ^ 2 + (playerZ - entry.z) ^ 2)
+    local distance = math.sqrt((player.x - entry.x) ^ 2 + (player.y - entry.y) ^ 2 + (player.z - entry.z) ^ 2)
     local carried = mode == "held" or mode == "vehicleInside"
 
     if not carried and distance > MAX_RANGE then
@@ -101,15 +139,7 @@ local function updateEntry(entry, index, playerX, playerY, playerZ)
         return
     end
 
-    if carried then
-        entry.sound:setVolume(entry.deviceData:getDeviceVolume())
-    else
-        local dropoffRange = (MAX_RANGE - MIN_RANGE) * 0.2 + entry.deviceData:getDeviceVolume() * entry.sound.volumeModifier * 2.5 * (MAX_RANGE - MIN_RANGE) * 0.8
-        local volumeModifier = ((MIN_RANGE + dropoffRange - distance) / dropoffRange)
-        if volumeModifier < 0 then volumeModifier = 0 end
-        if volumeModifier > 1 then volumeModifier = 1 end
-        entry.sound:setVolume(entry.deviceData:getDeviceVolume() * volumeModifier)
-    end
+    applyVolume(entry, mode, carried and entry.deviceData:getDeviceVolume() or dropoffVolume(entry, distance), listener)
 
     if not entry.sound:isPlaying() then
         finishedCounters[entry] = (finishedCounters[entry] or 0) + 1
@@ -140,13 +170,17 @@ function MaelstromMusic.Playback.Tick.onTick()
     if not player then
         return
     end
-    local playerX, playerY, playerZ = player:getX(), player:getY(), player:getZ()
+    local position = { x = player:getX(), y = player:getY(), z = player:getZ() }
+    local listener = nil
+    if MaelstromMusic.Playback.Device.isStaged() then
+        listener = MaelstromMusic.Playback.Staging.listener(player, MaelstromMusic.Options.listenerFrame())
+    end
 
     MaelstromMusic.Playback.Cache.ensureFrequencyMap()
 
     local entries = MaelstromMusic.Playback.Cache.entries
     for index = #entries, 1, -1 do
-        updateEntry(entries[index], index, playerX, playerY, playerZ)
+        updateEntry(entries[index], index, position, listener)
     end
 end
 
