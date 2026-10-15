@@ -97,7 +97,7 @@ Every `feat` or `fix` has its own issue, its own branch and its own pull request
 - A pull request links its issue (`Closes #<n>`), summarises the change and lists the in game steps used to verify it. One concern per pull request.
 - Never add a `Co-Authored-By` trailer, and never add a "Generated with Claude Code" line or any similar attribution, in commits or pull request descriptions.
 - Line endings are LF. If every file suddenly shows as modified, it is a line ending problem, normalise it instead of committing the noise.
-- Run `git commit`, `git push` and `gh` commands only when explicitly asked to in the current session. Never touch the contents of the Steam Workshop or the local game mod folders to "sync" changes, the maintainer deploys manually or with a sync script described below.
+- Run `git commit`, `git push` and `gh` commands only when explicitly asked to in the current session. Apart from the sync script described below, never write into the Steam Workshop or the local game mod folders.
 - The repository is public. Do not commit usernames, home directory paths, machine names, tokens or personal information. Use `~` and placeholders in docs.
 
 ## Local development and Workshop layout (Linux)
@@ -107,7 +107,8 @@ Every `feat` or `fix` has its own issue, its own branch and its own pull request
 - The active mod list is `~/Zomboid/mods/default.txt`. Logs are `~/Zomboid/console.txt` and `~/Zomboid/Logs/`.
 - A mod ID must exist only once. If the maintainer is subscribed to their own published item, unsubscribe it (or disable it) while testing a local copy, otherwise two copies with the same ID compete.
 - Never symlink a mod into `~/Zomboid/Workshop` or `~/Zomboid/mods`. The game resolves mod directories with `getCanonicalFile()` when it loads scripts, so a mod reached through a symlink loses its script files and its sounds stay silent (see @docs/ENGINE_NOTES.md).
-- Edit in this repository and deploy by copying `Contents/`, `workshop.txt` and `preview.png` into `~/Zomboid/Workshop/<item>/` as real files, with a small sync script kept outside the repository. The files the game generates at runtime (`GeneratedRadios.txt`, `_radios_manifest.txt`) must survive a sync.
+- Edit in this repository and deploy by copying `Contents/`, `workshop.txt` and `preview.png` into `~/Zomboid/Workshop/<item>/` as real files, with the sync script kept in the parent workspace folder outside the repository (`sync-mods.sh`). The files the game generates at runtime (`GeneratedRadios.txt`, `_radios_manifest.txt`) survive a sync.
+- Always keep the game folder in sync: run the sync script after every change to the working tree (an edit, a branch switch, a merge, a pull), and finish a task by running it from an up to date `main`. The maintainer must never have to ask for it, and a task is not done while `sync-mods.sh status` reports a missing or symlinked item.
 
 ## Related repositories
 
