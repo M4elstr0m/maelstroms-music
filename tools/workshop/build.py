@@ -1,11 +1,12 @@
 """Builds workshop.txt and the change note from the single sources.
 
-usage: python3 tools/workshop/build.py [build|check|changenote|release-notes|draft] [--version X] [--plain] [--copy]
+usage: python3 tools/workshop/build.py [build|check|changenote|release-notes|github-release|draft] [--version X] [--plain] [--copy] [--title]
 
   build          write workshop.txt from workshop/item.json and workshop/description.md
   check          fail when workshop.txt is stale or the changelog does not match mod.info
   changenote     print the change note as Steam BBCode, or as plain text with --plain (--copy puts it on the clipboard)
   release-notes  print the changelog section as Markdown for a GitHub release
+  github-release print the body of the GitHub release page from workshop/github-release.md (--title prints its title)
   draft          list the merged feat and fix commits since the last tag as changelog entries
 """
 import argparse
@@ -25,6 +26,7 @@ ROOT = Path(__file__).resolve().parents[2]
 ITEM = ROOT / "workshop" / "item.json"
 DESCRIPTION = ROOT / "workshop" / "description.md"
 CHANGELOG = ROOT / "CHANGELOG.md"
+RELEASE_TEMPLATE = ROOT / "workshop" / "github-release.md"
 WORKSHOP_TXT = ROOT / "workshop.txt"
 MOD_INFO = next((ROOT / "Contents" / "mods").glob("*/42/mod.info"), None)
 
@@ -104,6 +106,14 @@ def mod_version():
     return match.group(1).strip()
 
 
+def release_title():
+    return f"v{mod_version()} - {load_item()['title']}"
+
+
+def release_body():
+    return RELEASE_TEMPLATE.read_text(encoding="utf-8").replace("{{title}}", release_title())
+
+
 def check_changelog_matches_mod_info():
     latest = changelog.latest_released(load_releases())
     if latest is None or latest.version != mod_version():
@@ -147,16 +157,19 @@ def run(arguments):
             print(f"copied with {copy_to_clipboard(note)}", file=sys.stderr)
     elif arguments.command == "release-notes":
         print(release_notes(arguments.version), end="")
+    elif arguments.command == "github-release":
+        print(release_title() if arguments.title else release_body(), end="\n" if arguments.title else "")
     elif arguments.command == "draft":
         print(draft_entries(), end="")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("command", nargs="?", default="build", choices=("build", "check", "changenote", "release-notes", "draft"))
+    parser.add_argument("command", nargs="?", default="build", choices=("build", "check", "changenote", "release-notes", "github-release", "draft"))
     parser.add_argument("--version")
     parser.add_argument("--plain", action="store_true")
     parser.add_argument("--copy", action="store_true")
+    parser.add_argument("--title", action="store_true")
     try:
         run(parser.parse_args())
     except BuildError as error:
