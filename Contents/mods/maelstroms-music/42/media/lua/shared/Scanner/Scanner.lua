@@ -227,7 +227,8 @@ function MaelstromMusic.Scanner.run()
 
         MaelstromMusic.Broadcasts = MaelstromMusic.Scanner.Manifest.buildStations(stations, tunableIds, frequencyByStationId)
         MaelstromMusic.Backgrounds = MaelstromMusic.Scanner.Manifest.buildBackgrounds(stations, stationIds)
-        MaelstromMusic.MainMenuStation = stations["mainmenu"] and MaelstromMusic.Scanner.Manifest.buildMainMenu(stations["mainmenu"]) or nil
+        MaelstromMusic.MainMenuStation = stations["mainmenu"] and MaelstromMusic.Scanner.Manifest.buildPooledStation("mainmenu", stations["mainmenu"]) or nil
+        MaelstromMusic.DeathStation = stations["death"] and MaelstromMusic.Scanner.Manifest.buildPooledStation("death", stations["death"]) or nil
 
         local newManifest = MaelstromMusic.Scanner.Manifest.buildText(stations, stationIds)
         local oldManifest = MaelstromMusic.Fs.readFile(MANIFEST_FILE)
