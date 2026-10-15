@@ -10,10 +10,5 @@
     "UI_MaelstromMusic_GapMax_tt": "Raised to the shortest pause if it is set lower.",
     "UI_MaelstromMusic_AudioTitle": "Radio and TV positioning",
     "UI_MaelstromMusic_StereoSafe": "Stereo safe positioning",
-    "UI_MaelstromMusic_StereoSafe_tt": "Turn this on if radios and TVs go silent when you face them or turn your back to them. Some audio setups (typically PulseAudio or PipeWire on Linux) drop the centre and rear speakers of the game's 5.1 mix, so only sounds to your left and right are heard. This keeps every radio and TV audible from any direction and keeps the muffling through walls. Changing it restarts the track that is playing.",
-    "UI_MaelstromMusic_ListenerFrame": "Direction you listen from",
-    "UI_MaelstromMusic_ListenerFrame_tt": "Screen: left and right follow the screen, like the base game. Player: left and right follow the way your character faces, for first person mods. Automatic picks Player when the Viewpoint mod is installed. Used by stereo safe positioning only.",
-    "UI_MaelstromMusic_FrameAuto": "Automatic",
-    "UI_MaelstromMusic_FrameScreen": "Screen",
-    "UI_MaelstromMusic_FramePlayer": "Player"
+    "UI_MaelstromMusic_StereoSafe_tt": "Turn this on if radios and TVs go silent when you face them or turn your back to them. Some audio setups (typically PulseAudio or PipeWire on Linux) drop the centre and rear speakers of the game's 5.1 mix, so only sounds to your left and right are heard. This keeps every radio and TV audible from any direction and keeps the muffling through walls. Changing it restarts the track that is playing."
 }

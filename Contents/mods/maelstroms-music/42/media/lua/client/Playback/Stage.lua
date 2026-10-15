@@ -33,12 +33,9 @@ end
 table.sort(candidates, function(a, b) return a.cost < b.cost end)
 
 function MaelstromMusic.Playback.Stage.forward(frame, player)
-    if frame == "player" then
-        local direction = player:getForwardDirection()
-        local length = math.sqrt(direction:getX() ^ 2 + direction:getY() ^ 2)
-        if length > 0 then
-            return direction:getX() / length, direction:getY() / length
-        end
+    if frame == "look" then
+        local angle = player:getLookAngleRadians()
+        return math.cos(angle), math.sin(angle)
     end
     return SCREEN_FORWARD_X, SCREEN_FORWARD_Y
 end

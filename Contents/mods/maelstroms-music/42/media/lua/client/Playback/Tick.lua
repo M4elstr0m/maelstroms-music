@@ -4,7 +4,7 @@ require "Playback/Cache"
 require "Playback/Device"
 require "Playback/Discovery"
 require "Playback/Staging"
-require "Options"
+require "Playback/ListenerFrame"
 
 MaelstromMusic.Playback.Tick = {}
 
@@ -173,7 +173,7 @@ function MaelstromMusic.Playback.Tick.onTick()
     local position = { x = player:getX(), y = player:getY(), z = player:getZ() }
     local listener = nil
     if MaelstromMusic.Playback.Device.isStaged() then
-        listener = MaelstromMusic.Playback.Staging.listener(player, MaelstromMusic.Options.listenerFrame())
+        listener = MaelstromMusic.Playback.Staging.listener(player, MaelstromMusic.Playback.ListenerFrame.current())
     end
 
     MaelstromMusic.Playback.Cache.ensureFrequencyMap()

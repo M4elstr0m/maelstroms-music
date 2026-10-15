@@ -33,9 +33,31 @@ check("hard left silences the right emitter", near(left, 1) and near(right, 0))
 
 local screenX, screenY = Stage.forward("screen", nil)
 check("the screen frame is the engine listener vector", near(screenX, forwardX) and near(screenY, forwardY))
-local player = { getForwardDirection = function() return { getX = function() return 0 end, getY = function() return 2 end } end }
-local playerX, playerY = Stage.forward("player", player)
-check("the player frame follows the facing direction", near(playerX, 0) and near(playerY, 1))
+local player = { getLookAngleRadians = function() return math.pi / 2 end }
+local lookX, lookY = Stage.forward("look", player)
+check("the look frame follows the look angle", near(lookX, 0) and near(lookY, 1))
+
+local clock = 0
+getTimestampMs = function() return clock end
+require "Playback/ListenerFrame"
+local ListenerFrame = MaelstromMusic.Playback.ListenerFrame
+local function frameWhen(nextView)
+    clock = clock + 1000
+    Viewpoint = nextView and { View = { next = function() return nextView end } } or nil
+    return ListenerFrame.current()
+end
+check("without Viewpoint the frame is the screen", frameWhen(nil) == "screen")
+check("Viewpoint in first person uses the look angle", frameWhen("third") == "look")
+check("Viewpoint in third person uses the look angle", frameWhen("isometric") == "look")
+check("Viewpoint in its isometric view keeps the screen frame", frameWhen("first") == "screen")
+clock = clock + 100
+Viewpoint = { View = { next = function() return "third" end } }
+check("the frame is refreshed at most every half second", ListenerFrame.current() == "screen")
+clock = clock + 1000
+Viewpoint = { View = { next = function() error("broken") end } }
+MaelstromMusic.Log = MaelstromMusic.Log or { write = function() end }
+check("a failing Viewpoint view falls back to the screen frame", ListenerFrame.current() == "screen")
+Viewpoint = nil
 
 local origin = { x = 100, y = 100 }
 Occlusion.direct = function() return 0 end

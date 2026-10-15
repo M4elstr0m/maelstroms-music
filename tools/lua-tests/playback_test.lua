@@ -43,7 +43,7 @@ function player:getZ() return 0 end
 function player:getVehicle() return self.inVehicle and vehicle or nil end
 function player:getCurrentSquare() return nil end
 function player:getPlayerNum() return 0 end
-function player:getForwardDirection() return { getX = function() return 1 end, getY = function() return 0 end } end
+function player:getLookAngleRadians() return 0 end
 getPlayer = function() return player end
 
 local function newDeviceData(kind)
