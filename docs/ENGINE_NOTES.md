@@ -36,6 +36,7 @@ Verified facts about Project Zomboid Build 42 (tested on 42.20 and 42.21) that s
 - The character creation voice preview (`CharacterCreationMain:onOptionMouseDown`, button `PLAYDEMOVOICE`) calls `setMusicState("InGame")` and `resumeSoundAndMusic()` itself, with a vanilla `FIXME: main menu music stops when this is set`. The per-frame re-assertion in `MainMenu.lua` fights that call.
 - `SoundManager.playMusic(name)` calls `DoMusic(name, loop)`. It returns early when `allowMusic` is false or the music volume option is 0, otherwise picks a random clip of the sound script `name`. A clip with `event` starts an FMOD Studio event, a clip with `file` plays the file through FMOD directly.
 - On player death `IsoPlayer.OnDeath` calls `playMusic("PlayerDied")` when all players are dead, then fires `Events.OnPlayerDeath`. Vanilla defines `Base.PlayerDied` with the FMOD event `Game/GameOver`.
+- A `file` clip played through `DoMusic` goes straight to a raw FMOD channel with the clip's own volume, so it ignores the music volume option. Overriding `PlayerDied` with file clips therefore plays at full volume. The mod plays game over tracks itself (`client/DeathMusic.lua`, scaled by the option) on `OnPlayerDeath` and calls `StopMusic()`, which stops both the event instance and a file channel of the vanilla stinger.
 
 ## Radios and devices
 

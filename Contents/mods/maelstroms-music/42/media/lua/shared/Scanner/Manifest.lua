@@ -43,37 +43,14 @@ local function buildTrackSounds(stationId, station)
     return definitions
 end
 
-local function buildDeathSound(station)
-    local clips = {}
-    for index, trackFile in ipairs(station.trackFiles) do
-        table.insert(clips, "\t\tclip\n" ..
-            "\t\t{\n" ..
-            "\t\t\tfile = " .. station.rawDir .. "/" .. station.trackDirs[index] .. "/" .. trackFile .. ",\n" ..
-            "\t\t}\n")
-    end
-    return "module Base\n{\n" ..
-        "\tsound PlayerDied\n" ..
-        "\t{\n" ..
-        "\t\tcategory = Player,\n" ..
-        table.concat(clips) ..
-        "\t}\n" ..
-        "}\n"
-end
-
 function MaelstromMusic.Scanner.Manifest.buildGeneratedScript(stations, stationIds)
     local parts = { "module MaelstromMusic\n{\n" }
     for _, stationId in ipairs(stationIds) do
-        local station = stations[stationId]
-        if station.kind ~= "death" then
-            for _, definition in ipairs(buildTrackSounds(stationId, station)) do
-                table.insert(parts, definition)
-            end
+        for _, definition in ipairs(buildTrackSounds(stationId, stations[stationId])) do
+            table.insert(parts, definition)
         end
     end
     table.insert(parts, "}\n")
-    if stations["death"] then
-        table.insert(parts, buildDeathSound(stations["death"]))
-    end
     return table.concat(parts)
 end
 
@@ -166,10 +143,10 @@ function MaelstromMusic.Scanner.Manifest.buildStations(stations, stationIds, fre
     return result
 end
 
-function MaelstromMusic.Scanner.Manifest.buildMainMenu(station)
+function MaelstromMusic.Scanner.Manifest.buildPooledStation(stationId, station)
     local trackNames = {}
     for index, _ in ipairs(station.trackFiles) do
-        table.insert(trackNames, "BroadcastTrack_mainmenu_" .. index)
+        table.insert(trackNames, "BroadcastTrack_" .. stationId .. "_" .. index)
     end
     return {
         title = station.title,

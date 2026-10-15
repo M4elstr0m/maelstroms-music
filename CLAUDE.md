@@ -11,7 +11,7 @@ Deeper engine knowledge (quirks, confirmed limitations, reverted approaches) liv
 ```txt
 Contents/mods/maelstroms-music/
   42/mod.info, 42/media/lua/{shared,client,server}/   Lua source (Build 42 only)
-  common/media/{radios,televisions,backgrounds,mainmenu}/   user content (JSON + folders)
+  common/media/{radios,televisions,backgrounds,mainmenu,deaths}/   user content (JSON + folders)
 workshop.txt, preview.png    Steam Workshop item metadata (repo root, outside Contents/)
 README.md, ADDONS.md         user and addon author documentation
 docs/                        developer notes (not shipped to the Workshop)
@@ -32,6 +32,9 @@ Only `Contents/` is uploaded to the Workshop. Everything else in the repo is dev
 - `client/Backgrounds/`: `Director.lua` is the adaptive soundtrack state machine, `Mood.lua` computes the 0 to 10 drama value from zombie counts.
 - `client/MainMenu.lua`: main menu theme, carried through the loading screen.
 - `client/VanillaMusic.lua`: claim based suppression of the vanilla soundtrack.
+- `client/DeathMusic.lua`: plays the pooled game over tracks on player death, at the music volume.
+- `client/VoicePreview.lua`: detects the character creation voice preview so the menu theme can step aside.
+- `client/Options.lua`: the mod options page (`PZAPI.ModOptions`) and typed accessors for its values.
 - `server/Channels.lua`: registers each station as a `DynamicRadioChannel`.
 
 Design principles: never modify base game files, work through Lua and generated sound scripts only, keep content declarative (JSON plus folders), prefer opt-in behaviour over opt-out when an action could silently discard an author's configuration.
@@ -89,7 +92,7 @@ Write scratch material (extracted classes, throwaway scripts) outside the repo.
 Every `feat` or `fix` has its own issue, its own branch and its own pull request.
 
 - Branch from an up to date `main`, named `<type>/<short-slug>`, for example `feat/bgm-gap-setting` or `fix/tv-pickup-sound`. Types: `feat`, `fix`, `docs`, `refactor`, `perf`, `chore`.
-- Commit messages follow Conventional Commits: `type(scope): imperative summary`, lowercase, at most 72 characters, no trailing period. Scopes in use: `playback`, `backgrounds`, `mainmenu`, `scanner`, `addons`, `frequency`, `options`, `docs`. Add a body when the why is not obvious.
+- Commit messages follow Conventional Commits: `type(scope): imperative summary`, lowercase, at most 72 characters, no trailing period. Scopes in use: `playback`, `backgrounds`, `mainmenu`, `deaths`, `scanner`, `addons`, `frequency`, `options`, `docs`. Add a body when the why is not obvious.
 - Keep commits atomic and small: roughly 200 changed lines at most per commit. If a change is larger, split it into a logical series (for example engine change, then UI, then docs).
 - A pull request links its issue (`Closes #<n>`), summarises the change and lists the in game steps used to verify it. One concern per pull request.
 - Never add a `Co-Authored-By` trailer, and never add a "Generated with Claude Code" line or any similar attribution, in commits or pull request descriptions.
