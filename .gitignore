@@ -17,3 +17,5 @@ Contents/mods/maelstroms-music/common/media/mainmenu/*
 
 Contents/mods/maelstroms-music/common/media/deaths/*
 !Contents/mods/maelstroms-music/common/media/deaths/.gitkeep
+
+__pycache__/
