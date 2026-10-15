@@ -11,7 +11,7 @@ class RenderTest(unittest.TestCase):
     def test_workshop_txt_layout(self):
         item = {"id": "42", "title": "T", "tags": ["Audio", "QoL"], "visibility": "public"}
         self.assertEqual(build.render_workshop_txt(item, ["a", "", "b"]),
-                         "version=1\nid=42\ntitle=T\ntags=Audio;QoL\nvisibility=public\ndescription=a\ndescription=\ndescription=b\n")
+                         "version=1\nid=42\ntitle=T\ndescription=a\ndescription=\ndescription=b\ntags=Audio;QoL\nvisibility=public\n")
 
 
 class RepositoryTest(unittest.TestCase):

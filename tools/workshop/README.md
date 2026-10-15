@@ -41,7 +41,7 @@ Line breaks are kept exactly as written, so there is no paragraph reflow. A blan
 ## What the game's uploader does (verified in `WorkshopSubmitScreen.lua` and `SteamWorkshopItem`)
 
 - `workshop.txt` is read for `id`, `title`, `description` (one `description=` line per line), `tags` (`;` separated), `visibility` (`public`, `friendsOnly`, `private`, `unlisted`) and `version`. Lines starting with `#` or `//` are comments.
-- The uploader shows those values in editable fields and rewrites `workshop.txt` from them before uploading, so the file may differ from the generated one after an upload. Run `build` again.
+- The uploader shows those values in editable fields and rewrites `workshop.txt` from them before uploading, in the order `version`, `id`, `title`, `description`, `tags`, `visibility`, which is the order `build.py` writes, so the file only differs after an upload if a field was edited in the dialog. Edit the sources instead and run `build` again.
 - There is no change note key. The change note can only be typed or pasted into the dialog.
 - On upload the game appends `Workshop ID: <id>` and `Mod ID: <id>` lines to the description. Do not write them in `description.md`.
 - The uploaded folder is `<item>/Contents` and the preview is `<item>/preview.png`. Valid tags are the lines of `media/WorkshopTags.txt` in the game folder, and `build.py` rejects any other.

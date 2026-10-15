@@ -68,10 +68,12 @@ def render_workshop_txt(item, lines):
         f"version={WORKSHOP_TXT_VERSION}",
         f"id={item['id']}",
         f"title={item['title']}",
+    ]
+    footer = [
         f"tags={';'.join(item.get('tags', []))}",
         f"visibility={item['visibility']}",
     ]
-    return "\n".join(header + [f"description={line}" for line in lines]) + "\n"
+    return "\n".join(header + [f"description={line}" for line in lines] + footer) + "\n"
 
 
 def load_releases():

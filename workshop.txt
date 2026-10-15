@@ -1,8 +1,6 @@
 version=1
 id=3775149796
-title=Maelstrom's Music [B42.20]
-tags=Build 42;Audio;Framework;Multiplayer;QoL;WIP
-visibility=public
+title=Maelstrom's Music [B42.20+]
 description=[h1]Maelstrom's Music[/h1]
 description=[i]Because the apocalypse deserves a soundtrack.[/i]
 description=
@@ -86,3 +84,5 @@ description=[i]Released under MIT License (Non-Commercial Variant).[/i]
 description=[i]Created by [b][url=https://github.com/M4elstr0m]M4elstr0m[/url][/b].[/i]
 description=
 description=[url=https://discord.gg/SReMnbV4V7][img]https://raw.githubusercontent.com/Chuckleberry-Finn/chuckImages/main/PZmodCommBanner3.png[/img][/url]
+tags=Build 42;Audio;Framework;Multiplayer;QoL;WIP
+visibility=public
