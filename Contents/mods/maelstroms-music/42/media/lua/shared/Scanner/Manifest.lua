@@ -11,7 +11,11 @@ function MaelstromMusic.Scanner.Manifest.sortedStationIds(stations)
     return stationIds
 end
 
-local SCRIPT_SCHEMA_VERSION = 2
+local SCRIPT_SCHEMA_VERSION = 3
+
+local SPATIAL_DISTANCE_MIN = 30
+local SPATIAL_DISTANCE_MAX = 225
+local FLAT_DISTANCE_MAX = 75
 
 function MaelstromMusic.Scanner.Manifest.buildText(stations, stationIds)
     local lines = { "schema|" .. SCRIPT_SCHEMA_VERSION }
@@ -22,7 +26,16 @@ function MaelstromMusic.Scanner.Manifest.buildText(stations, stationIds)
     return table.concat(lines, "\n")
 end
 
+-- Distances are in third-of-a-tile units. Only world devices are 3D, a 3D sound ticking without a player crashes.
+local function spatialProperties(kind)
+    if kind == "radio" or kind == "television" then
+        return "true", "\t\t\tdistanceMin = " .. SPATIAL_DISTANCE_MIN .. ",\n\t\t\tdistanceMax = " .. SPATIAL_DISTANCE_MAX .. ",\n"
+    end
+    return "false", "\t\t\tdistanceMax = " .. FLAT_DISTANCE_MAX .. ",\n"
+end
+
 local function buildTrackSounds(stationId, station)
+    local is3D, distances = spatialProperties(station.kind)
     local definitions = {}
     for index, trackFile in ipairs(station.trackFiles) do
         local soundName = "BroadcastTrack_" .. stationId .. "_" .. index
@@ -32,11 +45,11 @@ local function buildTrackSounds(stationId, station)
             "\t{\n" ..
             "\t\tcategory = Maelstrom Music,\n" ..
             "\t\tmaster = Ambient,\n" ..
-            "\t\tis3D = false,\n" ..
+            "\t\tis3D = " .. is3D .. ",\n" ..
             "\t\tclip\n" ..
             "\t\t{\n" ..
             "\t\t\tfile = " .. filePath .. ",\n" ..
-            "\t\t\tdistanceMax = 75,\n" ..
+            distances ..
             "\t\t}\n" ..
             "\t}\n\n")
     end
