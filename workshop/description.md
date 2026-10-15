@@ -31,6 +31,13 @@ Please report your bugs & suggestions on Github (see above link).
 
 ---
 
+## 🔴 Troubleshooting
+Radios or TVs go silent when you face them or turn your back to them, or only play on your left and right?
+Open **Options > Mods > Maelstrom's Music** and turn on **Stereo safe positioning**.
+*Some audio setups (mostly PulseAudio or PipeWire on Linux) drop the centre and rear speakers of the game's surround mix. This option keeps every radio and TV audible from any direction and keeps the muffling through walls.*
+
+---
+
 ## Quick Setup Guide
 Simply download a Maelstrom's Music Addon (available in Steam Workshop) and enable the concerned mods.
 **Or** (if you want to add your own music manually) please refer to the project's [Github](https://github.com/M4elstr0m/maelstroms-music) page for full documentation.
