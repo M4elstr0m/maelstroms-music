@@ -6,6 +6,8 @@ The mod ID is `maelstromsmusic`. The Lua namespace is the single global `Maelstr
 
 Deeper engine knowledge (quirks, confirmed limitations, reverted approaches) lives in @docs/ENGINE_NOTES.md. Read it before touching anything audio related.
 
+Decisions and their reasoning are architecture decision records in `docs/adr/` (index in `docs/adr/README.md`). Read the relevant one before changing its area, and add or supersede a record when a decision changes. Current state, what is verified and what is open: @docs/HANDOFF.md, update it at the end of every session.
+
 ## Repository layout
 
 ```txt
@@ -14,7 +16,9 @@ Contents/mods/maelstroms-music/
   common/media/{radios,televisions,backgrounds,mainmenu,deaths}/   user content (JSON + folders)
 workshop.txt, preview.png    Steam Workshop item metadata (repo root, outside Contents/)
 README.md, ADDONS.md         user and addon author documentation
-docs/                        developer notes (not shipped to the Workshop)
+docs/                        developer notes: ENGINE_NOTES.md, HANDOFF.md, adr/ (not shipped to the Workshop)
+tools/fmod-lab/              offline FMOD probes (pan and occlusion), see its README
+tools/lua-tests/             stubbed engine tests of the playback logic
 ```
 
 Only `Contents/` is uploaded to the Workshop. Everything else in the repo is development material.
@@ -28,7 +32,7 @@ Only `Contents/` is uploaded to the Workshop. Everything else in the repo is dev
 - `shared/Scanner/`: `Scanner.lua` discovers stations from the base mod and addons, merges `mergeTracks` stations, assigns frequencies and regenerates the sound script when the manifest changed. `Station.lua` validates one JSON file. `Manifest.lua` builds the generated sound script, the diffable manifest and the runtime station tables (including `sequences` gating).
 - `shared/Addons/`: addon discovery (`getActivatedMods`, `require=maelstromsmusic`, `maelstroms-music-addon.json` marker with `apiVersion`).
 - `client/Sound.lua`: thin wrapper over an FMOD emitter with manual fades.
-- `client/Playback/`: radio and TV engine. `Hooks.lua` wraps vanilla radio actions and preset loading, `Device.lua` starts tracks (2 track lookahead), `Tick.lua` handles range, volume and track end, `Discovery.lua` finds powered devices near the player, `Warmup.lua` pre-decodes tracks, `Cache.lua` and `DeviceRange.lua` hold state helpers.
+- `client/Playback/`: radio and TV engine. `Hooks.lua` wraps vanilla radio actions and preset loading, `Device.lua` starts tracks (2 track lookahead), decides a device's mode and adopts muted entries, `Tick.lua` handles range, volume, muting of vanished devices and track end, `Discovery.lua` finds powered devices near the player, `Warmup.lua` pre-decodes tracks, `Cache.lua` and `DeviceRange.lua` hold state helpers.
 - `client/Backgrounds/`: `Director.lua` is the adaptive soundtrack state machine, `Mood.lua` computes the 0 to 10 drama value from zombie counts.
 - `client/MainMenu.lua`: main menu theme, carried through the loading screen.
 - `client/VanillaMusic.lua`: claim based suppression of the vanilla soundtrack.
@@ -66,7 +70,7 @@ Lua runs on Kahlua (a Lua 5.1 style VM embedded in the game), not stock Lua:
 2. Do not guess engine behaviour. Decompile the game and read the bytecode (see "Decompiling the game"). Do not hesitate to do this, it is how most real root causes were found.
 3. After a fix, state its blast radius on the other audio systems (radios, backgrounds, main menu). Several early fixes regressed other systems.
 4. Check @docs/ENGINE_NOTES.md "Approaches that failed" before proposing a design, to avoid repeating a dead end.
-5. Syntax check every edited Lua file: `luac5.1 -p <file>`. There is no automated test suite, so verify behaviour in game and read the console log.
+5. Syntax check every edited Lua file: `luac5.1 -p <file>`, and run `lua5.1 tools/lua-tests/playback_test.lua` from the repository root (stubbed engine, assertions on the playback logic). Anything about sound is checked with `tools/fmod-lab`. Then verify in game and read the console log.
 
 ## Decompiling the game
 

@@ -72,6 +72,8 @@ Verified facts about Project Zomboid Build 42 (tested on 42.20 and 42.21) that s
 - Symlinking the repository into `~/Zomboid/Workshop` for local testing. Scripts of a symlinked mod do not load (see Lua environment above), deploy real copies instead.
 - Polling `getActivatedMods()` to detect mod toggles. The full Lua reload already re-runs `OnGameBoot`.
 - Keeping state on `MaelstromMusic.*` tables to survive a reload. They are wiped too.
+- A softened virtual position for radios and TVs (flat script, same distance, bearing leaning at most 27 degrees). The engine derives occlusion from the real square of the sound, so the muffling through walls and the head turn stereo were lost, see ADR 0003.
+- Flat radio and TV scripts with a mod computed pan. FMOD pans a collapsed stereo source entirely into one ear as soon as it leaves the centre.
 - A custom Boombox and vinyl UI tab (original design). It only worked for one item type and cut audio off at range. The `DynamicRadioChannel` per station design replaced it.
 - Real mid-track resume, asynchronous loading, unloading played tracks, loading custom jars from the mod, fetching Workshop descriptions. All confirmed impossible from Lua (see above).
 - Diagnostic logging for an intermittent lag after several "Quit to Menu" cycles. It could not be reproduced and was reverted. The `checkLeak` log in `VanillaMusic.lua` is intentionally kept as low volume instrumentation.
