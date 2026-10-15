@@ -4,6 +4,7 @@ require "Sound"
 require "Playback/Cache"
 require "Playback/Track"
 require "Playback/Warmup"
+require "Playback/Spatial"
 
 MaelstromMusic.Playback.Device = {}
 
@@ -82,26 +83,52 @@ function MaelstromMusic.Playback.Device.isPresent(device, deviceData)
     return device:getObjectIndex() ~= -1
 end
 
-local function configureSound(sound, device, deviceData)
+local VOLUME_MODIFIER = { held = 0.6, vehicleInside = 0.8, vehicleOutside = 0.3, world = 0.4 }
+
+function MaelstromMusic.Playback.Device.modeOf(deviceData)
     if deviceData.isInventoryDevice and deviceData:isInventoryDevice() then
-        sound:set3D(false)
-        sound:setVolumeModifier(0.6)
-    elseif deviceData.isVehicleDevice and deviceData:isVehicleDevice() then
-        local vehiclePart = deviceData:getParent()
-        local vehicle = vehiclePart and vehiclePart:getVehicle()
-        if vehicle then
-            sound:setEmitter(vehicle:getEmitter())
-            if vehicle == getPlayer():getVehicle() then
-                sound:set3D(false)
-                sound:setVolumeModifier(0.8)
-            else
-                sound:set3D(true)
-                sound:setVolumeModifier(0.3)
-            end
+        return "held"
+    end
+    if deviceData.isVehicleDevice and deviceData:isVehicleDevice() then
+        local part = deviceData:getParent()
+        local vehicle = part and part:getVehicle()
+        if vehicle and vehicle == getPlayer():getVehicle() then
+            return "vehicleInside"
         end
-    else
-        sound:setPosAtObject(device)
-        sound:setVolumeModifier(0.4)
+        return "vehicleOutside"
+    end
+    return "world"
+end
+
+function MaelstromMusic.Playback.Device.isPositional(mode)
+    return (mode == "world" or mode == "vehicleOutside") and MaelstromMusic.Playback.Spatial.isDirectional()
+end
+
+function MaelstromMusic.Playback.Device.applyMode(sound, mode)
+    local modifier = VOLUME_MODIFIER[mode]
+    if sound.volumeModifier ~= modifier then
+        sound:setVolumeModifier(modifier)
+    end
+    local positional = MaelstromMusic.Playback.Device.isPositional(mode)
+    if sound.sound3D ~= positional then
+        sound:set3D(positional)
+    end
+end
+
+function MaelstromMusic.Playback.Device.placeSound(sound, x, y, z)
+    local player = getPlayer()
+    local virtualX, virtualY = MaelstromMusic.Playback.Spatial.virtualPosition(player:getX(), player:getY(), x, y)
+    sound:setPos(virtualX, virtualY, z)
+end
+
+local function configureSound(sound, device, deviceData)
+    local mode = MaelstromMusic.Playback.Device.modeOf(deviceData)
+    MaelstromMusic.Playback.Device.applyMode(sound, mode)
+    if MaelstromMusic.Playback.Device.isPositional(mode) then
+        local x, y, z = locate(device, deviceData)
+        if x then
+            MaelstromMusic.Playback.Device.placeSound(sound, x, y, z)
+        end
     end
 end
 
