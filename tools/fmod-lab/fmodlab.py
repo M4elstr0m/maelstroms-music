@@ -14,6 +14,9 @@ RATE = 48000
 FMOD_2D, FMOD_3D, FMOD_LOOP_NORMAL, FMOD_CREATESAMPLE = 0x8, 0x10, 0x2, 0x100
 OUTPUT_WAVWRITER_NRT = 5
 SPEAKERMODE_STEREO = 3
+SPEAKERMODE_5POINT1 = 6
+GAME_MIX_RATE = 32000
+SPEAKER_FRONT_LEFT, SPEAKER_FRONT_RIGHT, SPEAKER_CENTER = 0, 1, 2
 INIT_FLAGS_GAME = 0x20300
 
 P = ctypes.c_void_p
@@ -92,11 +95,12 @@ def _read_wav(path):
     return (audio / 32768 if dtype == "<i2" else audio).reshape(-1, channels)
 
 
-def render(signal, source, listener_forward, listener_up, mode_3d=True, channel_setup=None, init_flags=INIT_FLAGS_GAME):
+def render(signal, source, listener_forward, listener_up, mode_3d=True, channel_setup=None, init_flags=INIT_FLAGS_GAME,
+           speaker_mode=SPEAKERMODE_STEREO, mix_rate=RATE):
     output = tempfile.mktemp(suffix=".wav")
     system = create_system()
     fmod.FMOD_System_SetOutput(system, OUTPUT_WAVWRITER_NRT)
-    fmod.FMOD_System_SetSoftwareFormat(system, RATE, SPEAKERMODE_STEREO, 0)
+    fmod.FMOD_System_SetSoftwareFormat(system, mix_rate, speaker_mode, 0)
     assert fmod.FMOD_System_Init(system, 1024, init_flags, output.encode()) == 0
     fmod.FMOD_System_Set3DSettings(system, 1.0, 1.0, 1.0)
     sound, channel, still = P(), P(), Vec(0, 0, 0)
@@ -118,7 +122,7 @@ def render(signal, source, listener_forward, listener_up, mode_3d=True, channel_
     fmod.FMOD_System_Release(system)
     audio = _read_wav(output)
     os.unlink(output)
-    return audio[int(0.4 * RATE):int(1.6 * RATE)]
+    return audio[int(0.4 * mix_rate):int(1.6 * mix_rate)]
 
 
 def rms_db(channel):
