@@ -105,9 +105,20 @@ local function configureSound(sound, device, deviceData)
     end
 end
 
+local function findOrphan(stationId, deviceData, x, y)
+    local own = MaelstromMusic.Playback.Cache.get(deviceData)
+    if own and own.orphanedAt then
+        if own.sound:isPlaying() then
+            return own
+        end
+        MaelstromMusic.Playback.Cache.remove(own)
+    end
+    return MaelstromMusic.Playback.Cache.takeOrphan(stationId, x, y, ORPHAN_ADOPT_RADIUS)
+end
+
 local function adoptOrphan(stationId, device, deviceData)
     local x, y, z = locate(device, deviceData)
-    local entry = MaelstromMusic.Playback.Cache.takeOrphan(stationId, x, y, ORPHAN_ADOPT_RADIUS)
+    local entry = findOrphan(stationId, deviceData, x, y)
     if not entry then
         return false
     end
@@ -159,6 +170,7 @@ function MaelstromMusic.Playback.Device.playStation(stationId, device)
     local x, y, z = locate(device, deviceData)
 
     local entry = existing or {}
+    entry.orphanedAt = nil
     entry.device = device
     entry.deviceData = deviceData
     entry.stationId = stationId
@@ -189,11 +201,11 @@ function MaelstromMusic.Playback.Device.ensurePlaying(device)
     end
 
     local entry = MaelstromMusic.Playback.Cache.get(deviceData)
-    if entry and entry.sound and entry.sound:isPlaying() then
+    if entry and not entry.orphanedAt and entry.sound and entry.sound:isPlaying() then
         return
     end
 
-    if not entry and adoptOrphan(stationId, device, deviceData) then
+    if (not entry or entry.orphanedAt) and adoptOrphan(stationId, device, deviceData) then
         return
     end
 
