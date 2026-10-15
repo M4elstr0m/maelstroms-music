@@ -96,6 +96,15 @@ local sticky = Stage.place({}, origin, 1, 0, 1, { distance = 10, z = 0, occlusio
 local again = Stage.place({}, origin, 1, 0, 1, { distance = 10, z = 0, occlusion = 0.2 }, sticky.candidate)
 check("a previous candidate is tried first", again.candidate == sticky.candidate)
 
+local previousCandidate = Stage.place({}, origin, 1, 0, 1, { distance = 10, z = 0, occlusion = 0 }).candidate
+local px, py = Stage.position(origin, 1, 0, 1, previousCandidate, 10)
+Occlusion.direct = function(_, x, y) return (near(x, px) and near(y, py)) and 0.2 or 0.22 end
+local kept = Stage.place({}, origin, 1, 0, 1, { distance = 10, z = 0, occlusion = 0.5 }, previousCandidate)
+check("a barely better square does not replace the current one", kept.candidate == previousCandidate)
+Occlusion.direct = function(_, x, y) return (near(x, px) and near(y, py)) and 0.2 or 0.45 end
+local switched = Stage.place({}, origin, 1, 0, 1, { distance = 10, z = 0, occlusion = 0.5 }, previousCandidate)
+check("a clearly better square replaces it", switched.candidate ~= previousCandidate)
+
 check("a close radio is not amplified past the cap", Stage.gainCompensation(1, 2.2, 0) <= 1.2)
 check("equal distances need no compensation", near(Stage.gainCompensation(10, 10, 0), 1))
 check("a farther virtual square is compensated upward", Stage.gainCompensation(10, 12, 0) > 1)

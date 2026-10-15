@@ -7,6 +7,7 @@ MaelstromMusic.Playback.Staging = {}
 local LEFT_SIDE, RIGHT_SIDE = -1, 1
 local SEARCH_INTERVAL_MS = 400
 local SMOOTHING_MS = 60
+local GLIDE_MS = 150
 local VOLUME_EPSILON = 0.002
 local FIRST_STEP_ALPHA = 1 - math.exp(-1)
 
@@ -73,8 +74,18 @@ local function follow(sound, current, target, alpha)
     return gain
 end
 
-local function moveVoice(sound, pose, side, state, z)
-    local x, y = MaelstromMusic.Playback.Stage.position(pose, pose.forwardX, pose.forwardY, side, state.candidate, state.radius)
+local function ease(current, target, elapsed)
+    if not current or elapsed <= 0 then
+        return current or target
+    end
+    return current + (target - current) * (1 - math.exp(-elapsed / GLIDE_MS))
+end
+
+local function moveVoice(sound, pose, side, state, z, elapsed)
+    state.shownRadius = ease(state.shownRadius, state.radius, elapsed)
+    state.shownAngle = ease(state.shownAngle, state.candidate.angleOffset, elapsed)
+    local x, y = MaelstromMusic.Playback.Stage.position(pose, pose.forwardX, pose.forwardY, side,
+        { angleOffset = state.shownAngle }, state.shownRadius)
     sound:moveTo(x, y, z)
 end
 
@@ -94,11 +105,10 @@ function MaelstromMusic.Playback.Staging.step(entry, pose, now)
     local leftTarget = stage.volume * leftGain * left.gain * Stage.gainCompensation(stage.distance, left.radius, stage.heightOffset)
     local rightTarget = stage.volume * rightGain * right.gain * Stage.gainCompensation(stage.distance, right.radius, stage.heightOffset)
 
-    moveVoice(entry.sound, pose, LEFT_SIDE, left, entry.z)
-    moveVoice(entry.companion, pose, RIGHT_SIDE, right, entry.z)
-
     local elapsed = now - (stage.steppedAt or now)
     stage.steppedAt = now
+    moveVoice(entry.sound, pose, LEFT_SIDE, left, entry.z, elapsed)
+    moveVoice(entry.companion, pose, RIGHT_SIDE, right, entry.z, elapsed)
     local gains = stage.gains or { left = entry.sound.volume, right = entry.companion.volume }
     local alpha = FIRST_STEP_ALPHA
     if stage.gains then

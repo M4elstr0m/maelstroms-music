@@ -12,8 +12,9 @@ local UNDER_MUFFLED_VOLUME_LOSS = 0.6
 local MIN_GAIN_COMPENSATION = 0.5
 local MAX_GAIN_COMPENSATION = 1.2
 local PAN_DEAD_ZONE = 0.5
-local RADIUS_OFFSETS = { 0, 1, -1, 2, -2, 3, -3, 4, -4, 6, -6 }
-local ANGLE_OFFSETS_DEGREES = { 0, 8, -8, 16, -16, 24, -24 }
+local RADIUS_OFFSETS = { 0, 1, -1, 2, -2, 3, -3, 4, -4, 6, -6, 8, -8 }
+local ANGLE_OFFSETS_DEGREES = { 0, 8, -8, 16, -16, 24, -24, 32, -32 }
+local SWITCH_MARGIN = 0.05
 local ANGLE_COST_PER_DEGREE = 1 / 8
 
 local SCREEN_FORWARD_X = -math.sqrt(0.5)
@@ -77,14 +78,15 @@ local function matches(placement)
 end
 
 function MaelstromMusic.Playback.Stage.place(observer, origin, forwardX, forwardY, side, target, previous, searchAgain)
-    local best = nil
+    local kept = nil
     if previous then
-        best = evaluate(observer, origin, forwardX, forwardY, side, target, previous)
-        if matches(best) or searchAgain == false then
-            return best
+        kept = evaluate(observer, origin, forwardX, forwardY, side, target, previous)
+        if matches(kept) or searchAgain == false then
+            return kept
         end
     end
 
+    local best = nil
     for _, candidate in ipairs(candidates) do
         local placement = evaluate(observer, origin, forwardX, forwardY, side, target, candidate)
         if not best or math.abs(placement.deficit) < math.abs(best.deficit) then
@@ -93,6 +95,10 @@ function MaelstromMusic.Playback.Stage.place(observer, origin, forwardX, forward
         if matches(placement) then
             break
         end
+    end
+
+    if kept and math.abs(best.deficit) > math.abs(kept.deficit) - SWITCH_MARGIN then
+        return kept
     end
     return best
 end

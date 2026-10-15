@@ -166,6 +166,12 @@ check("between searches the copies follow the look direction", pair.sound.x ~= b
 check("and stay on their own side of the new direction",
     Stage.pan(pair.sound.x - 100, pair.sound.y - 100, 0, 1) < -0.5 and Stage.pan(pair.companion.x - 100, pair.companion.y - 100, 0, 1) > 0.5)
 
+local state = pair.stage.sides[-1]
+local settledRadius = state.shownRadius
+state.radius = state.radius + 6
+Staging.step(pair, turned, clock + 48)
+check("a new square is reached by gliding, not jumping", state.shownRadius > settledRadius and state.shownRadius < state.radius)
+
 local sideVolume = pair.companion.volume
 Staging.step(pair, { x = 100, y = 100, z = 0, forwardX = 1, forwardY = 0 }, clock + 32)
 check("a change of pan is ramped, not stepped", math.abs(pair.companion.volume - sideVolume) < sideVolume * 0.6)
