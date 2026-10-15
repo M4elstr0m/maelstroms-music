@@ -14,11 +14,14 @@ Decisions and their reasoning are architecture decision records in `docs/adr/` (
 Contents/mods/maelstroms-music/
   42/mod.info, 42/media/lua/{shared,client,server}/   Lua source (Build 42 only)
   common/media/{radios,televisions,backgrounds,mainmenu,deaths}/   user content (JSON + folders)
-workshop.txt, preview.png    Steam Workshop item metadata (repo root, outside Contents/)
+workshop.txt, preview.png    Steam Workshop item metadata (repo root, outside Contents/), workshop.txt is generated
+workshop/                    sources of the Workshop page: description.md (Markdown) and item.json
+CHANGELOG.md                 single source of the release notes and the Workshop change note
 README.md, ADDONS.md         user and addon author documentation
 docs/                        developer notes: ENGINE_NOTES.md, HANDOFF.md, adr/ (not shipped to the Workshop)
 tools/fmod-lab/              offline FMOD probes (pan and occlusion), see its README
 tools/lua-tests/             stubbed engine tests of the playback logic
+tools/workshop/              builds workshop.txt and the change note from the sources above, see its README
 ```
 
 Only `Contents/` is uploaded to the Workshop. Everything else in the repo is development material.
@@ -96,8 +99,9 @@ Write scratch material (extracted classes, throwaway scripts) outside the repo.
 Every `feat` or `fix` has its own issue, its own branch and its own pull request.
 
 - Branch from an up to date `main`, named `<type>/<short-slug>`, for example `feat/bgm-gap-setting` or `fix/tv-pickup-sound`. Types: `feat`, `fix`, `docs`, `refactor`, `perf`, `chore`.
-- Commit messages follow Conventional Commits: `type(scope): imperative summary`, lowercase, at most 72 characters, no trailing period. Scopes in use: `playback`, `backgrounds`, `mainmenu`, `deaths`, `scanner`, `addons`, `frequency`, `options`, `docs`. Add a body when the why is not obvious.
+- Commit messages follow Conventional Commits: `type(scope): imperative summary`, lowercase, at most 72 characters, no trailing period. Scopes in use: `playback`, `backgrounds`, `mainmenu`, `deaths`, `scanner`, `addons`, `frequency`, `options`, `workshop`, `docs`. Add a body when the why is not obvious.
 - Keep commits atomic and small: roughly 200 changed lines at most per commit. If a change is larger, split it into a logical series (for example engine change, then UI, then docs).
+- A pull request that changes what players see adds an entry under `## [Unreleased]` in `CHANGELOG.md`. Never edit `workshop.txt` by hand, change `workshop/description.md` or `workshop/item.json` and run `python3 tools/workshop/build.py build` (`python3 -m unittest discover -s tools/workshop/tests` checks it is up to date).
 - A pull request links its issue (`Closes #<n>`), summarises the change and lists the in game steps used to verify it. One concern per pull request.
 - Never add a `Co-Authored-By` trailer, and never add a "Generated with Claude Code" line or any similar attribution, in commits or pull request descriptions.
 - Line endings are LF. If every file suddenly shows as modified, it is a line ending problem, normalise it instead of committing the noise.
