@@ -255,7 +255,6 @@ Maelstrom's Music adds a page to the game's **Options > Mods** screen. Settings 
 | Shortest pause between tracks  | 30 s    | Background soundtrack only. After a track ends, the mod stays silent for a random time between the shortest and longest pause before the next track. |
 | Longest pause between tracks   | 80 s    | Background soundtrack only. Raised to the shortest pause if set lower. Set both to 0 for back to back tracks. |
 | Stereo safe positioning        | Off     | Radios and TVs only. Turn it on if a radio goes silent when you face it or turn your back to it. See [Radios and TVs go silent from some directions](#radios-and-tvs-go-silent-from-some-directions). |
-| Direction you listen from      | Automatic | Used by stereo safe positioning. Screen follows the screen like the base game, Player follows the way your character faces, Automatic uses Player when the Viewpoint mod is installed. |
 
 ### Radios and TVs go silent from some directions
 
