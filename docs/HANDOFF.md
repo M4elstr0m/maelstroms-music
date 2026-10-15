@@ -4,7 +4,7 @@ Where the project stands, what is verified, and what comes next. Update this fil
 
 ## Snapshot (2026-10-16)
 
-- Version `1.1.0` in `mod.info`, released by publishing from the game's Workshop uploader (see `tools/workshop/README.md`) and then tagging `v1.1.0` (tag only, no GitHub release). `v1.0.8` predates several fixes. Never move a pushed tag.
+- Version `1.1.0` released on 2026-10-15: Workshop item updated with `tools/workshop/steam_publish.py` (the game's uploader cannot ask its confirmation box on this Linux setup, ADR 0010), tag `v1.1.0` pushed, GitHub release created from the strict template. Never move a pushed tag.
 - The maintainer works on Arch Linux. The game is under `~/Games/Steam`, user data in `~/Zomboid`. The workspace folder that contains this repository and the addon repositories has `sync-mods.sh`, run it after every change (ADR 0002). Own published Workshop items are unsubscribed while testing.
 - Addons live next to this repository: `maelstroms-music-fallout-radio-addon` (radio stations), `maelstroms-music-rdr-addon` and `maelstroms-music-tlou-addon` (backgrounds, main menu, the TLOU one also ships the game over track "Grieving"). They are not git repositories except this one.
 

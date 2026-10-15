@@ -32,9 +32,18 @@ What the game does (read from `WorkshopSubmitScreen.lua` and the decompiled `Ste
 
 Revisit if the manual paste of the change note becomes a burden. The generator already produces everything the VDF needs.
 
-## The Steam API fallback
+## Why the game's uploader failed on Linux, and the Steam API fallback
 
-For 1.1.0 the game's uploader failed on a fresh start with "error requesting Steam to update the item" and no further detail (its native log is only visible with `-debuglog=ZNet`). A probe that made the same `ISteamUGC` calls from outside the game, without submitting, showed that Steam accepted the account, the files, the text, the tags and the preview, so the cause was inside the game's process and was never identified. `steam_publish.py` (started with the maintainer's explicit go ahead) uses the game's `libsteam_api.so` and the logged in Steam session: no password, no SteamCMD. It reproduces what the game does (description plus `Workshop ID` and `Mod ID` lines, tags, visibility, content, preview, change note) and prints Steam's `EResult` instead of a generic message. The 1.1.0 submit returned `EResult 1` and the public page showed the new title and description.
+For 1.1.0 the game's uploader ended with "error requesting Steam to update the item" on every attempt, also after a full restart. Findings, in the order they were established:
+
+- Steam's own logs (`~/.local/share/Steam/logs/workshop_log.txt`) showed no upload request at all at the time, so the failure happened before any Steam call.
+- A probe that made the same `ISteamUGC` calls from outside the game (start update, title, description, visibility, tags, content folder, preview) without submitting got `true` from every call, with the maintainer's account, files and text. The account is the item's creator.
+- The Java side explains it. `SteamWorkshopItem.submitUpdate()` first calls `RenderThread.invokeQueryOnRenderContext` with `lambda$submitUpdate$0`, and only if that returns true does it call `SteamWorkshop.SubmitWorkshopItem`. The lambda is not a Steam call: it shows an operating system confirmation box through `TinyFileDialogs.tinyfd_messageBox`, titled "WARNING: Steam Workshop upload requested!" with the item title and id, buttons OK and Cancel, and returns true only when the answer is OK. The Lua screen prints "error requesting Steam to update the item" whenever `submitUpdate()` returns false.
+- On this machine the game runs inside Steam's Linux runtime container (`pressure-vessel`) with `-Djava.awt.headless=true`. tinyfd needs a dialog program on the path (`zenity`, `kdialog`, ...). `zenity` exists on the host but the container has its own filesystem, so the box most likely never appears (or appears out of sight behind the full screen game) and the call returns false. Windows has a native message box, which is why earlier uploads worked.
+
+Status: this is the cause by construction of the code and of the logs (a Cancel or a missing dialog returns false before any Steam call). It was not observed directly: nobody saw whether a box appeared, and the presence of a dialog tool inside the runtime was not checked. If it ever has to be proven, start the game with the launch option `-debuglog=ZNet` (enables the native Steam log) and watch whether a confirmation box appears when pressing the upload button.
+
+`tools/workshop/steam_publish.py` (started with the maintainer's explicit go ahead) bypasses the box: it makes the same `ISteamUGC` calls through the game's `libsteam_api.so` and the logged in Steam session, no password and no SteamCMD, and reproduces what the game does (description plus `Workshop ID` and `Mod ID` lines, tags, visibility, content, preview, change note). It prints Steam's `EResult` instead of a generic message. The 1.1.0 submit returned `EResult 1` and the public page showed the new title and description. Use it for every release from this machine.
 
 ## Consequences
 
