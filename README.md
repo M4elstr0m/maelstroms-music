@@ -243,7 +243,7 @@ Replace the music played when your character dies. It uses the same convention a
 Every track of every folder, from this mod and from addons, is pooled together and the game picks one at random on death. If `deaths/` is empty, the vanilla game over music plays as normal.
 
 > [!NOTE]
-> While a custom background soundtrack is active, the vanilla music is muted. On death the mod hands the vanilla music back so the game over music is audible.
+> The track is played by the mod and follows the game's music volume setting. The vanilla game over music is stopped when a custom track exists.
 
 ## Settings
 
