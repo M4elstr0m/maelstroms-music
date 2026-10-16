@@ -31,6 +31,7 @@ local nextPicks = {}
 local interruptedTrack = {}
 local trackStartedAt = 0
 
+-- Whether at least one background mood is available.
 local function hasBackgrounds()
     if not MaelstromMusic.Backgrounds then
         return false
@@ -41,10 +42,12 @@ local function hasBackgrounds()
     return false
 end
 
+-- Whether the adaptive soundtrack is in use.
 function MaelstromMusic.Ambience.Director.isActive()
     return hasBackgrounds()
 end
 
+-- Whether a radio or TV track is playing, which pauses the background soundtrack.
 local function hasAudibleRadio()
     if not MaelstromMusic.Playback or not MaelstromMusic.Playback.Cache then
         return false
@@ -57,6 +60,7 @@ local function hasAudibleRadio()
     return false
 end
 
+-- Picks the mood whose drama value is closest to the given one.
 local function pickBackgroundId(drama)
     local bestId, bestDiff = nil, nil
     for id, background in pairs(MaelstromMusic.Backgrounds) do
@@ -68,6 +72,7 @@ local function pickBackgroundId(drama)
     return bestId
 end
 
+-- Ends the current track and schedules the next one after a random gap taken from the options.
 local function startNewGap()
     currentId = nil
     currentTrackIndex = nil
@@ -77,6 +82,7 @@ local function startNewGap()
     gapEndsAt = getTimestampMs() + ZombRand(minSeconds * 1000, maxSeconds * 1000 + 1)
 end
 
+-- Keeps the next tracks of a mood queued and requests their pre-decoding.
 local function ensurePicks(backgroundId, background)
     local picks = nextPicks[backgroundId]
     if not picks then
@@ -95,6 +101,7 @@ local function ensurePicks(backgroundId, background)
     end
 end
 
+-- Queues and pre-decodes the first tracks of every mood.
 local function primeMoods()
     local count = 0
     for backgroundId, background in pairs(MaelstromMusic.Backgrounds or {}) do
@@ -107,6 +114,7 @@ local function primeMoods()
     end
 end
 
+-- Plays the next track of a mood with a fade in, resuming an interrupted one when still eligible.
 local function playTrack(backgroundId)
     local background = backgroundId and MaelstromMusic.Backgrounds[backgroundId]
     if not background then
@@ -154,6 +162,8 @@ local function playTrack(backgroundId)
     trackStartedAt = getTimestampMs()
 end
 
+-- Fades the current track out, remembering it for a resume, then plays the next mood.
+-- Starts the next mood directly when nothing is playing.
 local function beginFadeOut(nextId)
     if not sound or not sound:isPlaying() then
         if nextId then
@@ -172,6 +182,7 @@ local function beginFadeOut(nextId)
     sound:fadeOutAndStop(FADE_OUT_MS)
 end
 
+-- Keeps the FMOD music state on InGame and stops vanilla music.
 local function holdMusicState()
     MaelstromMusic.Safe.call("could not hold the background music state", function()
         getSoundManager():setMusicState("InGame")
@@ -179,6 +190,7 @@ local function holdMusicState()
     end)
 end
 
+-- Stops the soundtrack and releases the claim on the vanilla music.
 local function release()
     if sound then
         MaelstromMusic.Safe.call("could not stop the background soundtrack", function()
@@ -193,6 +205,7 @@ local function release()
     MaelstromMusic.VanillaMusic.refresh()
 end
 
+-- State machine: takeover, fades, pause for radios, mood changes, end of track and gaps.
 function MaelstromMusic.Ambience.Director.onTick()
     if not MaelstromMusic.ScanComplete or playerDead then
         return
@@ -269,6 +282,7 @@ function MaelstromMusic.Ambience.Director.onTick()
     playTrack(pickBackgroundId(MaelstromMusic.Ambience.Mood.current()))
 end
 
+-- Releases the soundtrack when the player dies so the game over music can play.
 local function onPlayerDeath()
     playerDead = true
     if takenOver then
@@ -276,6 +290,7 @@ local function onPlayerDeath()
     end
 end
 
+-- Releases the soundtrack as soon as there is no player, which means back at the menu.
 local function checkPlayerGone()
     if takenOver and not getPlayer() then
         release()

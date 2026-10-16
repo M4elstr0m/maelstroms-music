@@ -2,6 +2,7 @@ require "Namespace"
 
 MaelstromMusic.Ambience.Mood = {}
 
+-- Drama value from 0 to 10 based on the zombies visible or chasing the player.
 function MaelstromMusic.Ambience.Mood.current()
     local player = getPlayer()
     if not player then

@@ -15,6 +15,7 @@ local GAP_SLIDER_STEP_SECONDS = 5
 
 local page = nil
 
+-- Reads an option value, or the default while the options page does not exist.
 local function readValue(id, default)
     local option = page and page:getOption(id)
     if option == nil then
@@ -23,20 +24,24 @@ local function readValue(id, default)
     return option:getValue()
 end
 
+-- Whether the example station is offered on devices.
 function MaelstromMusic.Options.showExampleStation()
     return readValue(SHOW_EXAMPLE_STATION, true)
 end
 
+-- Minimum and maximum silence between background tracks in seconds, the maximum never below the minimum.
 function MaelstromMusic.Options.backgroundGapSeconds()
     local minSeconds = math.floor(readValue(BACKGROUND_GAP_MIN, DEFAULT_GAP_MIN_SECONDS))
     local maxSeconds = math.floor(readValue(BACKGROUND_GAP_MAX, DEFAULT_GAP_MAX_SECONDS))
     return minSeconds, math.max(minSeconds, maxSeconds)
 end
 
+-- Whether radios and TVs play through the stereo safe left and right emitters.
 function MaelstromMusic.Options.stereoSafePositioning()
     return readValue(STEREO_SAFE_POSITIONING, false)
 end
 
+-- Moves the page of this mod to the top of the Mods options list.
 local function moveToFront(createdPage)
     local pages = PZAPI.ModOptions.Data
     for index, existing in ipairs(pages) do
@@ -48,6 +53,7 @@ local function moveToFront(createdPage)
     table.insert(pages, 1, createdPage)
 end
 
+-- Creates the options page once and loads the saved values.
 local function install()
     if page or not PZAPI then
         return

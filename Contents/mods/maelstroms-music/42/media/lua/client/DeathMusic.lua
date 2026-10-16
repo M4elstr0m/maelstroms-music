@@ -9,6 +9,7 @@ MaelstromMusic.DeathMusic = {}
 
 local sound = nil
 
+-- Stops the game over music.
 local function stop()
     if not sound then
         return
@@ -19,6 +20,7 @@ local function stop()
     sound = nil
 end
 
+-- Replaces the vanilla game over stinger with a track of the game over pool, at the music volume.
 local function onPlayerDeath()
     local station = MaelstromMusic.DeathStation
     if not station then
