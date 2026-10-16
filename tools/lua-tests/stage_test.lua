@@ -100,7 +100,7 @@ local again = Stage.place({}, origin, 1, 0, 1, { distance = 10, z = 0, occlusion
 check("a previous candidate is tried first", again.candidate == sticky.candidate)
 
 local previousCandidate = Stage.place({}, origin, 1, 0, 1, { distance = 10, z = 0, occlusion = 0 }).candidate
-local px, py = Stage.position(origin, 1, 0, 1, previousCandidate, 10)
+local px, py = Stage.position(origin, 1, 0, 1, previousCandidate.angleOffset, 10)
 Occlusion.direct = function(_, x, y) return (near(x, px) and near(y, py)) and 0.2 or 0.22 end
 local kept = Stage.place({}, origin, 1, 0, 1, { distance = 10, z = 0, occlusion = 0.5 }, previousCandidate)
 check("a barely better square does not replace the current one", kept.candidate == previousCandidate)

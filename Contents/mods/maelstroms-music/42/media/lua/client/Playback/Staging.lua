@@ -11,10 +11,12 @@ local GLIDE_MS = 150
 local VOLUME_EPSILON = 0.002
 local FIRST_STEP_ALPHA = 1 - math.exp(-1)
 
--- Position and facing direction of the player.
-function MaelstromMusic.Playback.Staging.pose(player, frame)
-    local forwardX, forwardY = MaelstromMusic.Playback.Stage.forward(frame, player)
-    return { x = player:getX(), y = player:getY(), z = player:getZ(), forwardX = forwardX, forwardY = forwardY }
+-- Position and facing direction of the player, written into the given table when there is one.
+function MaelstromMusic.Playback.Staging.pose(player, frame, into)
+    local pose = into or {}
+    pose.forwardX, pose.forwardY = MaelstromMusic.Playback.Stage.forward(frame, player)
+    pose.x, pose.y, pose.z = player:getX(), player:getY(), player:getZ()
+    return pose
 end
 
 -- Pose of the player plus the occlusion observer.
@@ -93,7 +95,7 @@ local function moveVoice(sound, pose, side, state, z, elapsed)
     state.shownRadius = ease(state.shownRadius, state.radius, elapsed)
     state.shownAngle = ease(state.shownAngle, state.candidate.angleOffset, elapsed)
     local x, y = MaelstromMusic.Playback.Stage.position(pose, pose.forwardX, pose.forwardY, side,
-        { angleOffset = state.shownAngle }, state.shownRadius)
+        state.shownAngle, state.shownRadius)
     sound:moveTo(x, y, z)
 end
 
@@ -118,13 +120,15 @@ function MaelstromMusic.Playback.Staging.step(entry, pose, now)
     stage.steppedAt = now
     moveVoice(entry.sound, pose, LEFT_SIDE, left, entry.z, elapsed)
     moveVoice(entry.companion, pose, RIGHT_SIDE, right, entry.z, elapsed)
-    local gains = stage.gains or { left = entry.sound.volume, right = entry.companion.volume }
-    local alpha = FIRST_STEP_ALPHA
-    if stage.gains then
+    local gains = stage.gains
+    local alpha
+    if gains then
         alpha = elapsed > 0 and 1 - math.exp(-elapsed / SMOOTHING_MS) or 0
+    else
+        gains = { left = entry.sound.volume, right = entry.companion.volume }
+        stage.gains = gains
+        alpha = FIRST_STEP_ALPHA
     end
-    stage.gains = {
-        left = follow(entry.sound, gains.left, leftTarget, alpha),
-        right = follow(entry.companion, gains.right, rightTarget, alpha),
-    }
+    gains.left = follow(entry.sound, gains.left, leftTarget, alpha)
+    gains.right = follow(entry.companion, gains.right, rightTarget, alpha)
 end
