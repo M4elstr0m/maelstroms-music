@@ -23,13 +23,17 @@ CHECKED, UNCHECKED = "\u2705", "\u2b1c"
 
 
 class ConversionError(ValueError):
+    """Raised for Markdown that Steam's BBCode cannot express, with the line number."""
     def __init__(self, line_number, message):
+        """Stores the line number and builds the message."""
         super().__init__(f"line {line_number}: {message}")
         self.line_number = line_number
 
 
 def _inline(text, held):
+    """Converts the inline Markdown of a text, parking escaped, link and image BBCode in held placeholders."""
     def hold(bbcode):
+        """Parks finished BBCode behind a placeholder so later rules cannot touch it."""
         held.append(bbcode)
         return PLACEHOLDER.format(len(held) - 1)
 
@@ -43,6 +47,7 @@ def _inline(text, held):
 
 
 def convert_inline(text):
+    """Converts inline Markdown (bold, italic, code, links, images) to BBCode."""
     held = []
     text = _inline(text, held)
     while "\x00" in text:
@@ -51,6 +56,7 @@ def convert_inline(text):
 
 
 def _item(text):
+    """Converts one list item, turning a task checkbox into an emoji."""
     checkbox = CHECKBOX.match(text)
     if checkbox:
         mark = CHECKED if checkbox.group(1) != " " else UNCHECKED
@@ -59,6 +65,7 @@ def _item(text):
 
 
 def _reject_unsupported(line, number):
+    """Raises for nested lists, tables and HTML, which Steam cannot render."""
     if INDENTED_ITEM.match(line):
         raise ConversionError(number, "nested lists are not supported by Steam, flatten the list")
     if TABLE_ROW.match(line):
@@ -68,6 +75,7 @@ def _reject_unsupported(line, number):
 
 
 def convert(markdown):
+    """Converts a Markdown document of the supported subset to a list of BBCode lines."""
     lines = markdown.replace("\r\n", "\n").split("\n")
     if lines and lines[-1] == "":
         lines.pop()
@@ -76,12 +84,14 @@ def convert(markdown):
     in_code = False
 
     def close_block():
+        """Closes the list or quote that is open, if any."""
         nonlocal open_block
         if open_block:
             output.append(f"[/{open_block}]")
             open_block = None
 
     def open_list(kind):
+        """Opens a list or quote block, closing a different one first."""
         nonlocal open_block
         if open_block != kind:
             close_block()

@@ -14,6 +14,7 @@ UP = (0.0, 0.0, 1.0)
 
 
 def camera_orientation(yaw, pitch):
+    """Listener forward and up vectors for a camera yaw and pitch, as Viewpoint builds them."""
     c = math.cos(pitch)
     forward = (math.cos(yaw) * c, math.sin(yaw) * c, math.sin(pitch) * 3 / 2.4494896)
     length = math.sqrt(sum(v * v for v in forward))
@@ -24,6 +25,7 @@ def camera_orientation(yaw, pitch):
 
 
 def main():
+    """Prints the level of each ear while the listener turns on the spot."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--listener", choices=("vanilla", "camera"), default="camera")
     args = parser.parse_args()
@@ -33,6 +35,7 @@ def main():
     source = (4.0, 0.0, 0.0)
 
     def engine_setup(channel):
+        """Applies the distance settings the game uses for radios."""
         lab.fmod.FMOD_Channel_Set3DMinMaxDistance(channel, 2, 75)
         lab.fmod.FMOD_Channel_Set3DLevel(channel, 1.0)
 

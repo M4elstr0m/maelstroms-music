@@ -15,6 +15,7 @@ GameSounds = {
     getSound = function() return { getRandomClip = function() return "clip" end } end,
 }
 
+-- Creates a recording stand in for an FMOD emitter.
 local function newEmitter(name)
     local emitter = { name = name }
     function emitter:playClip() calls.clips = calls.clips + 1 return calls.clips end
@@ -46,6 +47,7 @@ function player:getPlayerNum() return 0 end
 function player:getLookAngleRadians() return 0 end
 getPlayer = function() return player end
 
+-- Creates a powered device data of a kind (world, held or vehicle) tuned to the test station.
 local function newDeviceData(kind)
     local data = {}
     data.getIsTurnedOn = function() return true end
@@ -57,6 +59,7 @@ local function newDeviceData(kind)
     return data
 end
 
+-- Creates a radio of a kind at a position.
 local function newDevice(kind, x, y, data)
     local device = { isItem = kind == "held", present = true, data = data or newDeviceData(kind) }
     device.getDeviceData = function() return device.data end
@@ -85,13 +88,17 @@ local staged = false
 MaelstromMusic.Options.stereoSafePositioning = function() return staged end
 local failures = 0
 
+-- Prints the result of one assertion and counts failures.
 local function check(description, condition)
     print((condition and "pass  " or "FAIL  ") .. description)
     if not condition then failures = failures + 1 end
 end
 
+-- Runs enough ticks for one entry update.
 local function update() for _ = 1, 5 do Tick.onTick() end end
+-- Runs rendered frames long enough for glides and smoothing to settle.
 local function settle() for _ = 1, 60 do clock = clock + 16; Tick.onRender() end end
+-- Clears the cache and the recorded calls.
 local function reset() Cache.entries = {}; calls = { clips = 0, positions = {}, stopped = {} }; volumes = {}; clock = 0; player.inVehicle = false end
 
 reset()
