@@ -2,6 +2,7 @@ require "Namespace"
 
 MaelstromMusic.Scanner.Manifest = {}
 
+-- Returns the station ids in alphabetical order so every output is deterministic.
 function MaelstromMusic.Scanner.Manifest.sortedStationIds(stations)
     local stationIds = {}
     for stationId, _ in pairs(stations) do
@@ -25,6 +26,7 @@ local function spatialProperties(kind)
     return "false", "\t\t\tdistanceMax = " .. FLAT_DISTANCE_MAX .. ",\n"
 end
 
+-- Builds the diffable manifest text, any change in it triggers a regeneration of the sound script.
 function MaelstromMusic.Scanner.Manifest.buildText(stations, stationIds)
     local lines = { "schema|" .. SCRIPT_SCHEMA_VERSION }
     for _, stationId in ipairs(stationIds) do
@@ -34,6 +36,7 @@ function MaelstromMusic.Scanner.Manifest.buildText(stations, stationIds)
     return table.concat(lines, "\n")
 end
 
+-- Builds one sound script definition per track of a station.
 local function buildTrackSounds(stationId, station)
     local is3D, distances = spatialProperties(station.kind)
     local definitions = {}
@@ -56,6 +59,7 @@ local function buildTrackSounds(stationId, station)
     return definitions
 end
 
+-- Builds the generated sound script holding every track of every station.
 function MaelstromMusic.Scanner.Manifest.buildGeneratedScript(stations, stationIds)
     local parts = { "module MaelstromMusic\n{\n" }
     for _, stationId in ipairs(stationIds) do
@@ -128,6 +132,7 @@ local function buildSequenceInfo(station)
     return forcedNext, gated
 end
 
+-- Builds the runtime radio and TV station tables, skipping stations that got no frequency.
 function MaelstromMusic.Scanner.Manifest.buildStations(stations, stationIds, frequencyByStationId)
     local result = {}
     for _, stationId in ipairs(stationIds) do
@@ -156,6 +161,7 @@ function MaelstromMusic.Scanner.Manifest.buildStations(stations, stationIds, fre
     return result
 end
 
+-- Builds a runtime station from a pooled track list (main menu theme, game over).
 function MaelstromMusic.Scanner.Manifest.buildPooledStation(stationId, station)
     local trackNames = {}
     for index, _ in ipairs(station.trackFiles) do
@@ -169,6 +175,7 @@ function MaelstromMusic.Scanner.Manifest.buildPooledStation(stationId, station)
     }
 end
 
+-- Builds the runtime tables of the adaptive background moods.
 function MaelstromMusic.Scanner.Manifest.buildBackgrounds(stations, stationIds)
     local result = {}
     for _, stationId in ipairs(stationIds) do

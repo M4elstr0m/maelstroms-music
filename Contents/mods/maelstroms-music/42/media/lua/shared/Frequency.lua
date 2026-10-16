@@ -21,6 +21,7 @@ MaelstromMusic.Frequency.UNIVERSAL_MIN = UNIVERSAL_MIN
 MaelstromMusic.Frequency.UNIVERSAL_MAX = UNIVERSAL_MAX
 MaelstromMusic.Frequency.UNIVERSAL_SLOT_COUNT = UNIVERSAL_SLOT_COUNT
 
+-- Stable string hash, so a station keeps the same preferred slot across sessions.
 local function stationHash(str)
     local hash = 5381
     for i = 1, #str do
@@ -29,6 +30,7 @@ local function stationHash(str)
     return hash
 end
 
+-- Linear probing from the seed slot to the first free one, or nil when every slot is taken.
 local function probeSlot(seed, slotCount, takenSlots)
     local slot = seed % slotCount
     local attempts = 0
@@ -42,6 +44,7 @@ local function probeSlot(seed, slotCount, takenSlots)
     return slot
 end
 
+-- Converts an index of the extended band (below, then above the universal band) to a frequency.
 local function extendedSlotToFrequency(index)
     if index < BELOW_UNIVERSAL_SLOT_COUNT then
         return EXTENDED_MIN + index * FREQ_STEP
@@ -49,6 +52,7 @@ local function extendedSlotToFrequency(index)
     return (UNIVERSAL_MAX + FREQ_STEP) + (index - BELOW_UNIVERSAL_SLOT_COUNT) * FREQ_STEP
 end
 
+-- Marks the slot of a fixed frequency as taken in the band it belongs to.
 local function reserveFixedSlot(frequency, universalTaken, extendedTaken)
     if frequency >= UNIVERSAL_MIN and frequency <= UNIVERSAL_MAX then
         universalTaken[(frequency - UNIVERSAL_MIN) / FREQ_STEP] = true
@@ -59,6 +63,8 @@ local function reserveFixedSlot(frequency, universalTaken, extendedTaken)
     end
 end
 
+-- Gives every station a frequency: fixed ones first, then hash plus probing in the universal band,
+-- then in the extended band. Stations left without a slot are absent from the result.
 function MaelstromMusic.Frequency.assign(stationIds, fixedFrequencyByStationId)
     fixedFrequencyByStationId = fixedFrequencyByStationId or {}
 

@@ -13,6 +13,7 @@ local GENERATED_SCRIPT_FILE = "media/scripts/GeneratedRadios.txt"
 if not MaelstromMusic.Broadcasts then MaelstromMusic.Broadcasts = {} end
 if not MaelstromMusic.Backgrounds then MaelstromMusic.Backgrounds = {} end
 
+-- Loads every station file of one directory of one mod into stations.
 local function discoverInDir(modId, baseDir, kind, stations)
     for _, fileName in ipairs(MaelstromMusic.Fs.listFilesFrom(modId, baseDir)) do
         local stationId, station = MaelstromMusic.Scanner.Station.tryLoad(modId, baseDir, kind, fileName)
@@ -22,6 +23,7 @@ local function discoverInDir(modId, baseDir, kind, stations)
     end
 end
 
+-- Loads the stations of a directory across every source, in source order.
 local function collectEntries(sources, baseDir, kind)
     local entries = {}
     for _, source in ipairs(sources) do
@@ -70,11 +72,13 @@ local function mergeSharedStations(entries, stations)
     end
 end
 
+-- Returns the lowercase extension of a file name, or nil.
 local function getExtension(fileName)
     local ext = string.match(fileName, "%.([%a%d]+)$")
     return ext and string.lower(ext) or nil
 end
 
+-- Lists the playable audio files of the main menu folder of a mod, skipping names with a comma.
 local function findMainMenuFiles(modId)
     local files = {}
     for _, fileName in ipairs(MaelstromMusic.Fs.listFilesFrom(modId, MaelstromMusic.MAINMENU_DIR)) do
@@ -91,6 +95,7 @@ local function findMainMenuFiles(modId)
     return files
 end
 
+-- Gathers the main menu tracks of every source into one list.
 local function collectMainMenuFiles(sources)
     local trackFiles = {}
     local contributingSources = 0
@@ -109,6 +114,7 @@ local function collectMainMenuFiles(sources)
     return trackFiles
 end
 
+-- Gathers the game over tracks, and the folder of each, of every source.
 local function collectDeathTracks(sources)
     local trackFiles, trackDirs = {}, {}
     for _, source in ipairs(sources) do
@@ -125,6 +131,7 @@ local function collectDeathTracks(sources)
     return trackFiles, trackDirs
 end
 
+-- Returns the base mod followed by the active addons.
 local function buildSources()
     local sources = { { modId = MaelstromMusic.MOD_ID, name = "Maelstrom's Music" } }
     for _, addon in ipairs(MaelstromMusic.Addons.Discovery.scan()) do
@@ -133,6 +140,7 @@ local function buildSources()
     return sources
 end
 
+-- Whether a table has no entries.
 local function isEmpty(t)
     for _ in pairs(t) do
         return false
@@ -140,6 +148,8 @@ local function isEmpty(t)
     return true
 end
 
+-- Discovers every station of every source: radios, TVs, one background set (first source wins),
+-- plus the main menu and game over pools.
 local function discoverStations(sources)
     local stations = {}
 
@@ -192,6 +202,8 @@ local function discoverStations(sources)
     return stations
 end
 
+-- Scans all sources, assigns frequencies, publishes the runtime tables and regenerates
+-- the sound script when the manifest changed.
 function MaelstromMusic.Scanner.run()
     MaelstromMusic.Safe.call("scan failed", function()
         local sources = buildSources()

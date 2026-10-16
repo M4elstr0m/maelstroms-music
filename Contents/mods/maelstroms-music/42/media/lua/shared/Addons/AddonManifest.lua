@@ -9,6 +9,7 @@ local MARKER_FILE = "maelstroms-music-addon.json"
 local MARKER_TYPE = "maelstroms-music-addon"
 local SUPPORTED_API_VERSIONS = { [1] = true }
 
+-- Reads and validates the marker file of an addon, returns its apiVersion or nil when missing or unsupported.
 function MaelstromMusic.Addons.Manifest.read(modId)
     local text = MaelstromMusic.Fs.readFileFrom(modId, MARKER_FILE)
     if not text then
