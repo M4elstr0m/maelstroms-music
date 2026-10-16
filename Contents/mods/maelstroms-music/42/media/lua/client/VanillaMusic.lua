@@ -63,11 +63,11 @@ end
 -- Silences vanilla music while any claim exists (reapplied every 50 ms), restores it when the last claim goes.
 function MaelstromMusic.VanillaMusic.refresh()
     if anyClaim() then
-        checkLeak()
         local now = getTimestampMs()
         if silenced and now - lastAppliedAt < REAPPLY_INTERVAL_MS then
             return
         end
+        checkLeak()
         silenced = true
         lastAppliedAt = now
         MaelstromMusic.Safe.call("could not silence the vanilla soundtrack", function()

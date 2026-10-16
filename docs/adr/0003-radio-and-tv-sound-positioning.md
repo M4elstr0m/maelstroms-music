@@ -25,7 +25,7 @@ A device has a mode, evaluated on every update, which sets the 2D or 3D state an
 | `vehicleOutside` | 3D on the vehicle's own emitter | 0.3 |
 | `world` | 3D, positioned at the object | 0.4 |
 
-The modifier used to be fixed when a track started, which left a car radio at the inside value after the player got out. The distance falloff in `Tick.lua` (dropoff range grows with the device volume, silent beyond 75 tiles) is kept on top of the engine's inverse roll-off.
+The modifier used to be fixed when a track started, which left a car radio at the inside value after the player got out. The distance falloff in `Tick/Volume.lua` (dropoff range grows with the device volume, silent beyond 75 tiles) is kept on top of the engine's inverse roll-off.
 
 ## Evidence
 

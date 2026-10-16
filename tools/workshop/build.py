@@ -10,8 +10,6 @@ usage: python3 tools/workshop/build.py [build|check|changenote|release-notes|git
   draft          list the merged feat and fix commits since the last tag as changelog entries
 """
 import argparse
-import json
-import re
 import shutil
 import subprocess
 import sys
@@ -19,122 +17,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import bbcode
 import changelog
-
-ROOT = Path(__file__).resolve().parents[2]
-ITEM = ROOT / "workshop" / "item.json"
-DESCRIPTION = ROOT / "workshop" / "description.md"
-CHANGELOG = ROOT / "CHANGELOG.md"
-RELEASE_TEMPLATE = ROOT / "workshop" / "github-release.md"
-WORKSHOP_TXT = ROOT / "workshop.txt"
-MOD_INFO = next((ROOT / "Contents" / "mods").glob("*/42/mod.info"), None)
-
-WORKSHOP_TXT_VERSION = 1
-VISIBILITIES = ("public", "friendsOnly", "private", "unlisted")
-ALLOWED_TAGS = (
-    "Build 40", "Build 41", "Build 42", "Animals", "Audio", "Balance", "Building", "Clothing/Armor", "Farming", "Food",
-    "Framework", "Hardmode", "Interface", "Items", "Language/Translation", "Literature", "Map", "Military", "Misc",
-    "Models", "Multiplayer", "Pop Culture", "Realistic", "Silly/Fun", "Skills", "Textures", "Traits", "Vehicles", "QoL",
-    "WIP", "Weapons",
-)
-
-
-class BuildError(Exception):
-    """Raised for a problem in the sources, reported without a stack trace."""
-    pass
-
-
-def load_item():
-    """Loads and validates workshop/item.json."""
-    item = json.loads(ITEM.read_text(encoding="utf-8"))
-    if not re.fullmatch(r"\d+", str(item.get("id", ""))):
-        raise BuildError("workshop/item.json: id must be the numeric Workshop id")
-    if not item.get("title"):
-        raise BuildError("workshop/item.json: title is required")
-    unknown = [tag for tag in item.get("tags", []) if tag not in ALLOWED_TAGS]
-    if unknown:
-        raise BuildError(f"workshop/item.json: tags the game does not offer: {', '.join(unknown)}")
-    if item.get("visibility") not in VISIBILITIES:
-        raise BuildError(f"workshop/item.json: visibility must be one of {', '.join(VISIBILITIES)}")
-    return item
-
-
-def description_lines():
-    """Converts workshop/description.md to the BBCode lines of the description."""
-    try:
-        return bbcode.convert(DESCRIPTION.read_text(encoding="utf-8"))
-    except bbcode.ConversionError as error:
-        raise BuildError(f"workshop/description.md: {error}") from error
-
-
-def render_workshop_txt(item, lines):
-    """Renders workshop.txt in the field order the game's uploader writes."""
-    header = [
-        f"version={WORKSHOP_TXT_VERSION}",
-        f"id={item['id']}",
-        f"title={item['title']}",
-    ]
-    footer = [
-        f"tags={';'.join(item.get('tags', []))}",
-        f"visibility={item['visibility']}",
-    ]
-    return "\n".join(header + [f"description={line}" for line in lines] + footer) + "\n"
-
-
-def load_releases():
-    """Parses CHANGELOG.md."""
-    return changelog.parse(CHANGELOG.read_text(encoding="utf-8"))
-
-
-def change_note(version=None, plain=False):
-    """Renders the change note of a version (default: the newest) as BBCode, or as plain text."""
-    try:
-        release = changelog.select(load_releases(), version)
-    except LookupError as error:
-        raise BuildError(str(error)) from error
-    markdown = changelog.change_note_markdown(release)
-    if plain:
-        return markdown.replace("**", "")
-    return "\n".join(bbcode.convert(markdown)) + "\n"
-
-
-def release_notes(version=None):
-    """Renders the release notes of a version (default: the newest) as Markdown."""
-    try:
-        release = changelog.select(load_releases(), version)
-    except LookupError as error:
-        raise BuildError(str(error)) from error
-    return changelog.release_notes_markdown(release)
-
-
-def mod_version():
-    """The modversion declared in mod.info."""
-    match = re.search(r"^modversion=(.+)$", MOD_INFO.read_text(encoding="utf-8"), re.MULTILINE)
-    return match.group(1).strip()
-
-
-def release_title():
-    """The GitHub release title: the version and the Workshop title."""
-    return f"v{mod_version()} - {load_item()['title']}"
-
-
-def release_body():
-    """The GitHub release page, from its template with the title filled in."""
-    return RELEASE_TEMPLATE.read_text(encoding="utf-8").replace("{{title}}", release_title())
-
-
-def check_changelog_matches_mod_info():
-    """Raises when the newest released changelog section is not the version in mod.info."""
-    latest = changelog.latest_released(load_releases())
-    if latest is None or latest.version != mod_version():
-        found = latest.version if latest else "none"
-        raise BuildError(f"mod.info is at {mod_version()} but the newest released changelog section is {found}")
-
-
-def build_text():
-    """The full content workshop.txt should have."""
-    return render_workshop_txt(load_item(), description_lines())
+import sources
 
 
 def copy_to_clipboard(text):
@@ -143,14 +27,14 @@ def copy_to_clipboard(text):
         if shutil.which(command[0]):
             subprocess.run(command, input=text.encode("utf-8"), check=True)
             return command[0]
-    raise BuildError("no clipboard tool found (wl-copy, xclip or xsel), print it and copy it by hand")
+    raise sources.BuildError("no clipboard tool found (wl-copy, xclip or xsel), print it and copy it by hand")
 
 
 def draft_entries():
     """Drafts changelog entries from the conventional commits since the last tag."""
-    tags = subprocess.run(["git", "-C", str(ROOT), "describe", "--tags", "--abbrev=0"], capture_output=True, text=True)
+    tags = subprocess.run(["git", "-C", str(sources.ROOT), "describe", "--tags", "--abbrev=0"], capture_output=True, text=True)
     revisions = f"{tags.stdout.strip()}..HEAD" if tags.returncode == 0 else "HEAD"
-    log = subprocess.run(["git", "-C", str(ROOT), "log", "--first-parent", "--format=%s", revisions],
+    log = subprocess.run(["git", "-C", str(sources.ROOT), "log", "--first-parent", "--format=%s", revisions],
                          capture_output=True, text=True, check=True)
     return changelog.draft(log.stdout.splitlines())
 
@@ -158,22 +42,22 @@ def draft_entries():
 def run(arguments):
     """Runs the command chosen on the command line."""
     if arguments.command == "build":
-        WORKSHOP_TXT.write_text(build_text(), encoding="utf-8", newline="\n")
-        print(f"wrote {WORKSHOP_TXT.relative_to(ROOT)}")
+        sources.WORKSHOP_TXT.write_text(sources.build_text(), encoding="utf-8", newline="\n")
+        print(f"wrote {sources.WORKSHOP_TXT.relative_to(sources.ROOT)}")
     elif arguments.command == "check":
-        if not WORKSHOP_TXT.exists() or WORKSHOP_TXT.read_text(encoding="utf-8") != build_text():
-            raise BuildError("workshop.txt is stale, run: python3 tools/workshop/build.py build")
-        check_changelog_matches_mod_info()
+        if not sources.WORKSHOP_TXT.exists() or sources.WORKSHOP_TXT.read_text(encoding="utf-8") != sources.build_text():
+            raise sources.BuildError("workshop.txt is stale, run: python3 tools/workshop/build.py build")
+        sources.check_changelog_matches_mod_info()
         print("workshop.txt is up to date and the changelog matches mod.info")
     elif arguments.command == "changenote":
-        note = change_note(arguments.version, arguments.plain)
+        note = sources.change_note(arguments.version, arguments.plain)
         print(note, end="")
         if arguments.copy:
             print(f"copied with {copy_to_clipboard(note)}", file=sys.stderr)
     elif arguments.command == "release-notes":
-        print(release_notes(arguments.version), end="")
+        print(sources.release_notes(arguments.version), end="")
     elif arguments.command == "github-release":
-        print(release_title() if arguments.title else release_body(), end="\n" if arguments.title else "")
+        print(sources.release_title() if arguments.title else sources.release_body(), end="\n" if arguments.title else "")
     elif arguments.command == "draft":
         print(draft_entries(), end="")
 
@@ -188,7 +72,7 @@ def main():
     parser.add_argument("--title", action="store_true")
     try:
         run(parser.parse_args())
-    except BuildError as error:
+    except sources.BuildError as error:
         print(f"error: {error}", file=sys.stderr)
         sys.exit(1)
 

@@ -88,9 +88,17 @@ local staged = false
 MaelstromMusic.Options.stereoSafePositioning = function() return staged end
 local failures = 0
 
--- Prints the result of one assertion and counts failures.
+-- Prints the result of one assertion and counts failures, with the state of the fake emitters when TRACE is set.
 local function check(description, condition)
     print((condition and "pass  " or "FAIL  ") .. description)
+    if os.getenv("TRACE") then
+        local ids, parts = {}, {}
+        for id in pairs(volumes) do ids[#ids + 1] = id end
+        table.sort(ids)
+        for _, id in ipairs(ids) do parts[#parts + 1] = string.format("%d=%.9f", id, volumes[id]) end
+        local last = calls.positions[#calls.positions]
+        print("trace", description, table.concat(parts, " "), last and string.format("%.9f %.9f %.9f", last[1], last[2], last[3]) or "-")
+    end
     if not condition then failures = failures + 1 end
 end
 
@@ -208,6 +216,14 @@ player.inVehicle = false
 Device.ensurePlaying(newDevice("vehicle", 106, 100)); update()
 local stagedCar = Cache.entries[1]
 check("a staged car radio does not borrow the vehicle emitter", stagedCar.sound.emitter ~= vehicleEmitter and stagedCar.companion.emitter ~= vehicleEmitter)
+
+if os.getenv("TRACE") then
+    local ids = {}
+    for id in pairs(volumes) do ids[#ids + 1] = id end
+    table.sort(ids)
+    for _, id in ipairs(ids) do print(string.format("trace\tvolume %d %.9f", id, volumes[id])) end
+    for index, position in ipairs(calls.positions) do print(string.format("trace\tposition %d %.9f %.9f %.9f", index, position[1], position[2], position[3])) end
+end
 
 print(failures == 0 and "all checks passed" or (failures .. " check(s) failed"))
 os.exit(failures == 0 and 0 or 1)

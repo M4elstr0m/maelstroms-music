@@ -25,7 +25,7 @@ function ISRadioAction:performSetChannel()
     if entry and oldChannel == newChannel and MaelstromMusic.Playback.Cache.stationForFrequency(newChannel) == entry.stationId then
         MaelstromMusic.Playback.Device.playStation(entry.stationId, entry.device)
     elseif entry and MaelstromMusic.Playback.Cache.stationForFrequency(newChannel) ~= entry.stationId then
-        MaelstromMusic.Playback.Device.stopSounds(entry)
+        MaelstromMusic.Playback.Device.Voices.stop(entry)
         MaelstromMusic.Playback.Cache.remove(entry)
         local newStationId = MaelstromMusic.Playback.Cache.stationForFrequency(newChannel)
         if newStationId then

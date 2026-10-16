@@ -8,7 +8,11 @@ MaelstromMusic.DEATHS_DIR = "media/deaths"
 MaelstromMusic.FREQ_STEP = 200
 MaelstromMusic.EXAMPLE_STATION_ID = "radio_example"
 MaelstromMusic.AUDIOFILE_EXTENSIONS = { mp3 = true, ogg = true, wav = true, flac = true }
+MaelstromMusic.Json = MaelstromMusic.Json or {}
 MaelstromMusic.Scanner = MaelstromMusic.Scanner or {}
 MaelstromMusic.Playback = MaelstromMusic.Playback or {}
+MaelstromMusic.Playback.Device = MaelstromMusic.Playback.Device or {}
+MaelstromMusic.Playback.Tick = MaelstromMusic.Playback.Tick or {}
 MaelstromMusic.Ambience = MaelstromMusic.Ambience or {}
+MaelstromMusic.MainMenu = MaelstromMusic.MainMenu or {}
 MaelstromMusic.Addons = MaelstromMusic.Addons or {}

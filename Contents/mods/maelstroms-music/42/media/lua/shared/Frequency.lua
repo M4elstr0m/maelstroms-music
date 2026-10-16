@@ -1,5 +1,6 @@
 require "Namespace"
 require "Log"
+require "Hash"
 
 MaelstromMusic.Frequency = {}
 
@@ -20,15 +21,6 @@ MaelstromMusic.Frequency.EXTENDED_MAX = EXTENDED_MAX
 MaelstromMusic.Frequency.UNIVERSAL_MIN = UNIVERSAL_MIN
 MaelstromMusic.Frequency.UNIVERSAL_MAX = UNIVERSAL_MAX
 MaelstromMusic.Frequency.UNIVERSAL_SLOT_COUNT = UNIVERSAL_SLOT_COUNT
-
--- Stable string hash, so a station keeps the same preferred slot across sessions.
-local function stationHash(str)
-    local hash = 5381
-    for i = 1, #str do
-        hash = (hash * 33 + string.byte(str, i)) % 2147483647
-    end
-    return hash
-end
 
 -- Linear probing from the seed slot to the first free one, or nil when every slot is taken.
 local function probeSlot(seed, slotCount, takenSlots)
@@ -92,7 +84,7 @@ function MaelstromMusic.Frequency.assign(stationIds, fixedFrequencyByStationId)
     end
 
     for _, stationId in ipairs(autoIds) do
-        local hash = stationHash(stationId)
+        local hash = MaelstromMusic.Hash.of(stationId)
         local universalSlot = probeSlot(hash, UNIVERSAL_SLOT_COUNT, universalTaken)
         if universalSlot then
             universalTaken[universalSlot] = true

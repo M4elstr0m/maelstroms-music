@@ -17,3 +17,26 @@ function MaelstromMusic.Ambience.Mood.current()
 
     return math.min(total + 3, 10)
 end
+
+-- Whether at least one background mood is available.
+function MaelstromMusic.Ambience.Mood.available()
+    if not MaelstromMusic.Backgrounds then
+        return false
+    end
+    for _ in pairs(MaelstromMusic.Backgrounds) do
+        return true
+    end
+    return false
+end
+
+-- Picks the mood whose drama value is closest to the given one.
+function MaelstromMusic.Ambience.Mood.closest(drama)
+    local bestId, bestDiff = nil, nil
+    for id, background in pairs(MaelstromMusic.Backgrounds) do
+        local diff = math.abs(drama - background.drama)
+        if not bestDiff or diff < bestDiff then
+            bestId, bestDiff = id, diff
+        end
+    end
+    return bestId
+end
