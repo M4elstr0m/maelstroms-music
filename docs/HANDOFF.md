@@ -8,6 +8,8 @@ Where the project stands, what is verified, and what comes next. Update this fil
 - The maintainer works on Arch Linux. The game is under `~/Games/Steam`, user data in `~/Zomboid`. The workspace folder that contains this repository and the addon repositories has `sync-mods.sh`, run it after every change (ADR 0002). Own published Workshop items are unsubscribed while testing.
 - Addons live next to this repository: `maelstroms-music-fallout-radio-addon` (radio stations), `maelstroms-music-rdr-addon` and `maelstroms-music-tlou-addon` (backgrounds, main menu, the TLOU one also ships the game over track "Grieving"). They are not git repositories except this one.
 
+- Branch `refactor/split-large-modules` (not merged, awaiting the maintainer's in game test) splits every file over about 150 lines into submodules, see the architecture map in `CLAUDE.md`. It adds characterisation tests for the scanner, json, frequency, sound, director and main menu (`tools/lua-tests`), and each split was checked against the output of the untouched code (`TRACE=1` prints the state at each step). Not covered by any test: `Hooks.lua`, `Discovery.lua`, `Warmup.lua`, `DeathMusic.lua`, `steam_publish.py` (reworked, never run after the split). Candidate not done: `Discovery.scan` visits about 1,700 squares every 100 ticks, `IsoCell.getProcessIsoObjects()` might replace it but whether every powered radio is in that list is unverified.
+
 ## What exists
 
 Radios and TV channels (engine 3D, ADR 0003), adaptive background soundtrack, main menu theme carried through loading, game over music (ADR 0006), mod options page (ADR 0007), addon system and `mergeTracks` and `sequences` (ADR 0001), device lifecycle (ADR 0004), vanilla music suppression (ADR 0005).

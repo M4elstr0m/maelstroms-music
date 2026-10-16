@@ -20,7 +20,7 @@ CHANGELOG.md                 single source of the release notes and the Workshop
 README.md, ADDONS.md         user and addon author documentation
 docs/                        developer notes: ENGINE_NOTES.md, HANDOFF.md, adr/ (not shipped to the Workshop)
 tools/fmod-lab/              offline FMOD probes (pan and occlusion), see its README
-tools/lua-tests/             stubbed engine tests of the playback logic
+tools/lua-tests/             stubbed engine tests of the scanner, playback, music and json logic
 tools/workshop/              builds workshop.txt and the change note from the sources above, see its README
 ```
 
@@ -28,16 +28,19 @@ Only `Contents/` is uploaded to the Workshop. Everything else in the repo is dev
 
 ## Architecture map
 
-- `shared/Namespace.lua`: the `MaelstromMusic` table, directory names, shared constants (`FREQ_STEP`, `AUDIOFILE_EXTENSIONS`).
-- `shared/Json.lua`: hand written JSON decoder (the Lua sandbox has none).
+A module is a file that fills one table of the `MaelstromMusic` namespace. When a module grows past about 150 lines it becomes a folder of submodules, and the file of the same name stays as a facade that only holds the entry points (the way a Rust `mod.rs` re-exports its children). The tables that hold submodules (`Json`, `Playback.Device`, `Playback.Tick`, `MainMenu`) are declared in `Namespace.lua`, because a submodule loads before its parent file runs.
+
+- `shared/Namespace.lua`: the `MaelstromMusic` table, the area tables, directory names, shared constants (`FREQ_STEP`, `AUDIOFILE_EXTENSIONS`).
+- `shared/Json.lua` and `Json/Scalars.lua`: hand written JSON decoder (the Lua sandbox has none), strings and numbers in the submodule.
 - `shared/Fs.lua`: file access through `getModFileReader`, `listFilesInModDirectory`, `getModFileWriter`.
+- `shared/Hash.lua`: the stable string hash behind frequency slots and device windows.
 - `shared/Frequency.lua`: deterministic frequency assignment (hash plus linear probing over a universal band then an extended band). Fixed `frequency` values are reserved first.
-- `shared/Scanner/`: `Scanner.lua` discovers stations from the base mod and addons, merges `mergeTracks` stations, assigns frequencies and regenerates the sound script when the manifest changed. `Station.lua` validates one JSON file. `Manifest.lua` builds the generated sound script, the diffable manifest and the runtime station tables (including `sequences` gating).
+- `shared/Scanner/`: one module per step of the scan. `Scanner.lua` runs it: sources, then `Stations.lua` (radios, TVs, the one background set), `Merge.lua` (`mergeTracks`), `Pools.lua` (main menu and game over pools), `Station.lua` (validates one JSON file), `Tracks.lua` (playable files of a folder), then frequencies, `Runtime.lua` (the station tables the game reads), `Sequences.lua` (`sequences` gating) and `Sync.lua` (regenerates the sound script when the manifest changed, built by `Script.lua`).
 - `shared/Addons/`: addon discovery (`getActivatedMods`, `require=maelstromsmusic`, `maelstroms-music-addon.json` marker with `apiVersion`).
-- `client/Sound.lua`: thin wrapper over an FMOD emitter with manual fades.
-- `client/Playback/`: radio and TV engine. `Hooks.lua` wraps vanilla radio actions and preset loading, `Device.lua` starts tracks (2 track lookahead), decides a device's mode and adopts muted entries, `Tick.lua` handles range, volume, muting of vanished devices and track end, `Discovery.lua` finds powered devices near the player, `Warmup.lua` pre-decodes tracks, `Cache.lua` and `DeviceRange.lua` hold state helpers.
-- `client/Backgrounds/`: `Director.lua` is the adaptive soundtrack state machine, `Mood.lua` computes the 0 to 10 drama value from zombie counts.
-- `client/MainMenu.lua`: main menu theme, carried through the loading screen.
+- `client/Sound.lua`: facade of `Sound/`: `Core.lua` wraps an FMOD emitter, `Fading.lua` and `Spatial.lua` add the fades and the positioning. `Fader.lua` is the linear ramp behind the fades.
+- `client/Playback/`: radio and TV engine. `Hooks.lua` wraps vanilla radio actions and preset loading. `Device.lua` starts tracks and adopts muted entries, with `Device/Mode.lua` (held, vehicle, world), `Location.lua`, `Voices.lua` (the main sound and its companion) and `Orphans.lua`. `Tick.lua` runs the update loop, with `Tick/Lifecycle.lua` (vanished devices, track end) and `Tick/Volume.lua` (range, dropoff, stage). `Staging.lua`, `Stage.lua`, `Occlusion.lua` and `ListenerFrame.lua` implement the stereo safe positioning. `PickQueue.lua` is the 2 track lookahead shared with the backgrounds. `Discovery.lua` finds powered devices near the player, `Warmup.lua` pre-decodes tracks, `Cache.lua` and `DeviceRange.lua` hold state helpers.
+- `client/Backgrounds/`: `Director.lua` is the adaptive soundtrack state machine, `Voice.lua` is the track it plays (fades, gaps, resume), `Mood.lua` computes the 0 to 10 drama value from zombie counts and picks the closest mood.
+- `client/MainMenu.lua`: events and the per frame loop of the main menu theme, carried through the loading screen. `MainMenu/Theme.lua` is the track, `MainMenu/Mix.lua` its volume and the mute of the vanilla soundtrack.
 - `client/VanillaMusic.lua`: claim based suppression of the vanilla soundtrack.
 - `client/DeathMusic.lua`: plays the pooled game over tracks on player death, at the music volume.
 - `client/VoicePreview.lua`: detects the character creation voice preview so the menu theme can step aside.
@@ -56,6 +59,7 @@ The code must always be clean and professional.
 - Follow the existing style: 4 space indentation, double quotes, `local` for everything that is not part of the public namespace, constants in `UPPER_SNAKE_CASE` at the top of the file, one module per file under the `MaelstromMusic.<Area>.<Module>` hierarchy, `require` lines at the top.
 - Wrap calls into engine APIs that can fail in `MaelstromMusic.Safe.call` and report through `MaelstromMusic.Log.write`. Do not swallow errors silently.
 - Folder names are lowercase. Documentation uses GitHub callouts (`> [!NOTE]`, `> [!IMPORTANT]`, `> [!CAUTION]`) and tables, matching the existing README.
+- Keep files at about 150 lines at most, split a larger module into submodules by concern.
 - Keep the scope of a change exactly what was asked. No drive-by refactors.
 - Never use an em dash or a spaced hyphen as a clause connector in code, docs, commit messages or PR text.
 
@@ -74,7 +78,7 @@ Lua runs on Kahlua (a Lua 5.1 style VM embedded in the game), not stock Lua:
 2. Do not guess engine behaviour. Decompile the game and read the bytecode (see "Decompiling the game"). Do not hesitate to do this, it is how most real root causes were found.
 3. After a fix, state its blast radius on the other audio systems (radios, backgrounds, main menu). Several early fixes regressed other systems.
 4. Check @docs/ENGINE_NOTES.md "Approaches that failed" before proposing a design, to avoid repeating a dead end.
-5. Syntax check every edited Lua file: `luac5.1 -p <file>`, and run `lua5.1 tools/lua-tests/playback_test.lua` from the repository root (stubbed engine, assertions on the playback logic). Anything about sound is checked with `tools/fmod-lab`. Then verify in game and read the console log.
+5. Syntax check every edited Lua file: `luac5.1 -p <file>`, and run every `lua5.1 tools/lua-tests/<name>_test.lua` from the repository root (stubbed engine, assertions on the logic, `TRACE=1` prints the state at each step to compare two versions of a refactor). Anything about sound is checked with `tools/fmod-lab`. Then verify in game and read the console log.
 
 ## Decompiling the game
 
