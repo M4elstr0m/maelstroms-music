@@ -60,9 +60,9 @@ Support.equal("the fade ends at full level", last(), "volume 7 0.200")
 Support.equal("updating a finished fade does nothing", sound:updateFade(), false)
 
 sound:fadeTo(0.5, 0)
-Support.equal("a fade without duration jumps to the target", sound.fadeLevel, 0.5)
+Support.equal("a fade without duration jumps to the target", sound.fader.level, 0.5)
 sound:fadeTo(1, -5)
-Support.equal("a negative duration jumps too", sound.fadeLevel, 1)
+Support.equal("a negative duration jumps too", sound.fader.level, 1)
 
 reset()
 sound:fadeOutAndStop(1000)
@@ -76,7 +76,7 @@ Support.check("the stop was sent to the emitter", (function() for _, line in ipa
 
 sound:play("track")
 sound:fadeOutAndStop(0)
-Support.check("a fade out without duration stops at once", sound.fadeLevel == 0 and sound.stopWhenFaded == true)
+Support.check("a fade out without duration stops at once", sound.fader.level == 0 and sound.stopWhenFaded == true)
 
 reset()
 local positioned = Sound:new()
