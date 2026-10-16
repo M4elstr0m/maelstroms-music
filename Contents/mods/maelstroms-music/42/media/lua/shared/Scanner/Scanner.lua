@@ -3,7 +3,7 @@ require "Log"
 require "Safe"
 require "Frequency"
 require "Addons/AddonDiscovery"
-require "Scanner/Discovery"
+require "Scanner/Stations"
 require "Scanner/Runtime"
 require "Scanner/Sync"
 
@@ -93,7 +93,7 @@ function MaelstromMusic.Scanner.run()
         local sources = buildSources()
         logAddons(sources)
 
-        local stations = MaelstromMusic.Scanner.Discovery.stations(sources)
+        local stations = MaelstromMusic.Scanner.Stations.discover(sources)
         local stationIds = sortedStationIds(stations)
         local tunableIds, fixedFrequencyByStationId = tunableStations(stations, stationIds)
         local frequencyByStationId = assignFrequencies(tunableIds, fixedFrequencyByStationId)

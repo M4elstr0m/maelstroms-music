@@ -5,7 +5,7 @@ require "Scanner/Station"
 require "Scanner/Merge"
 require "Scanner/Pools"
 
-MaelstromMusic.Scanner.Discovery = {}
+MaelstromMusic.Scanner.Stations = {}
 
 -- Loads the stations of a directory across the given sources, in source order.
 local function collectEntries(sources, baseDir, kind)
@@ -41,7 +41,7 @@ end
 
 -- Discovers every station of every source: radios, TVs, one background set (first source wins),
 -- plus the main menu and game over pools.
-function MaelstromMusic.Scanner.Discovery.stations(sources)
+function MaelstromMusic.Scanner.Stations.discover(sources)
     local stations = {}
     MaelstromMusic.Scanner.Merge.shared(collectEntries(sources, MaelstromMusic.RADIOS_DIR, "radio"), stations)
     MaelstromMusic.Scanner.Merge.shared(collectEntries(sources, MaelstromMusic.TVS_DIR, "television"), stations)
