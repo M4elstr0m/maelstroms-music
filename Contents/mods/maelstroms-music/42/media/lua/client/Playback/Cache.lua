@@ -6,6 +6,7 @@ MaelstromMusic.Playback.Cache.entries = {}
 local frequencyToStation = {}
 local frequencyToStationBuiltFor = nil
 
+-- Rebuilds the frequency to station map when the station tables changed.
 function MaelstromMusic.Playback.Cache.ensureFrequencyMap()
     if frequencyToStationBuiltFor == MaelstromMusic.Broadcasts then
         return
@@ -19,10 +20,12 @@ function MaelstromMusic.Playback.Cache.ensureFrequencyMap()
     frequencyToStationBuiltFor = MaelstromMusic.Broadcasts
 end
 
+-- Returns the id of the station on a frequency, or nil.
 function MaelstromMusic.Playback.Cache.stationForFrequency(frequency)
     return frequencyToStation[frequency]
 end
 
+-- Finds the entry of a device from its device data.
 function MaelstromMusic.Playback.Cache.get(deviceData)
     for _, entry in ipairs(MaelstromMusic.Playback.Cache.entries) do
         if entry.deviceData == deviceData then
@@ -32,6 +35,7 @@ function MaelstromMusic.Playback.Cache.get(deviceData)
     return nil
 end
 
+-- Finds a still playing orphaned entry of a station, optionally within a distance, for a moved device to adopt.
 function MaelstromMusic.Playback.Cache.takeOrphan(stationId, x, y, maxDistance)
     for _, entry in ipairs(MaelstromMusic.Playback.Cache.entries) do
         if entry.orphanedAt and entry.stationId == stationId and entry.sound:isPlaying() then
@@ -43,10 +47,12 @@ function MaelstromMusic.Playback.Cache.takeOrphan(stationId, x, y, maxDistance)
     return nil
 end
 
+-- Registers a new entry.
 function MaelstromMusic.Playback.Cache.add(entry)
     table.insert(MaelstromMusic.Playback.Cache.entries, entry)
 end
 
+-- Unregisters an entry.
 function MaelstromMusic.Playback.Cache.remove(entry)
     for index, existing in ipairs(MaelstromMusic.Playback.Cache.entries) do
         if existing == entry then
@@ -56,6 +62,7 @@ function MaelstromMusic.Playback.Cache.remove(entry)
     end
 end
 
+-- Unregisters the entry at an index.
 function MaelstromMusic.Playback.Cache.removeAt(index)
     table.remove(MaelstromMusic.Playback.Cache.entries, index)
 end

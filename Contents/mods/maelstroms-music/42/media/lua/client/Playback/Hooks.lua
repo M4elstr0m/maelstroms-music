@@ -7,6 +7,7 @@ require "Options"
 MaelstromMusic.Playback.Hooks = {}
 
 local origPerformSetChannel = ISRadioAction.performSetChannel
+-- Wraps the vanilla channel change to start, switch or stop the mod's playback on that device.
 function ISRadioAction:performSetChannel()
     local deviceData = self.deviceData
     local oldChannel = deviceData and deviceData:getChannel()
@@ -41,10 +42,12 @@ end
 local origReadPresets = RWMChannel.readPresets
 local origReadPresetsTV = RWMChannelTV.readPresets
 
+-- Whether a station is the example station while it is switched off in the options.
 local function isHiddenByOption(stationId)
     return stationId == MaelstromMusic.EXAMPLE_STATION_ID and not MaelstromMusic.Options.showExampleStation()
 end
 
+-- Removes the presets of hidden stations from a device and returns whether any was removed.
 local function removeHiddenPresets(devicePresets, presets)
     local removed = false
     for index = presets:size() - 1, 0, -1 do
@@ -60,6 +63,7 @@ local function removeHiddenPresets(devicePresets, presets)
     return removed
 end
 
+-- Whether a station should be added as a preset to a device of this kind and range.
 local function wantsPreset(stationId, station, wantKind, minChannel, maxChannel)
     return station.kind == wantKind
         and station.autoPreset
@@ -68,6 +72,7 @@ local function wantsPreset(stationId, station, wantKind, minChannel, maxChannel)
         and station.frequency <= maxChannel
 end
 
+-- Widens the range of a device and adds the missing station presets, returns whether anything changed.
 local function ensureStationPresets(devicePresets, deviceData)
     local presets = devicePresets:getPresets()
     if not presets then
@@ -110,6 +115,7 @@ local function ensureStationPresets(devicePresets, deviceData)
     return changed
 end
 
+-- Wraps the radio preset loading to inject the station presets.
 function RWMChannel:readPresets(_selected)
     if self.deviceData and self.deviceData:getDevicePresets() then
         if ensureStationPresets(self.deviceData:getDevicePresets(), self.deviceData) then
@@ -119,6 +125,7 @@ function RWMChannel:readPresets(_selected)
     origReadPresets(self, _selected)
 end
 
+-- Wraps the television preset loading to inject the station presets.
 function RWMChannelTV:readPresets(_selected)
     if self.deviceData and self.deviceData:getDevicePresets() then
         if ensureStationPresets(self.deviceData:getDevicePresets(), self.deviceData) then

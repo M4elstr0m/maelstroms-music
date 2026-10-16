@@ -2,6 +2,8 @@ require "Namespace"
 
 MaelstromMusic.Playback.Track = {}
 
+-- Picks the next track of a station (forced follow up, then shuffle or sequential, never a gated one)
+-- and returns its sound name and index.
 function MaelstromMusic.Playback.Track.chooseNext(station, currentIndex)
     if not station or not station.tracks or #station.tracks == 0 then
         return nil, nil

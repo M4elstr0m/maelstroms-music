@@ -14,6 +14,7 @@ local UNLOADED_SQUARE_LISTENER_OUTDOORS = 0.6
 local OTHER_FLOOR_FACTOR = 1.3
 local MAX_OCCLUSION = 0.9
 
+-- Captures the data about the listener that the occlusion rule depends on.
 function MaelstromMusic.Playback.Occlusion.observer(player)
     local square = player:getCurrentSquare()
     return {
@@ -24,6 +25,7 @@ function MaelstromMusic.Playback.Occlusion.observer(player)
     }
 end
 
+-- Occlusion of a sound inside a room as heard by the observer.
 local function indoorSound(observer, room)
     local listenerRoom = observer.room
     if not listenerRoom then
@@ -42,6 +44,7 @@ local function indoorSound(observer, room)
     return occlusion
 end
 
+-- Occlusion of an outdoor sound as heard by the observer.
 local function outdoorSound(observer)
     if observer.room then
         return SOUND_OUTDOORS_LISTENER_INDOORS
@@ -49,6 +52,7 @@ local function outdoorSound(observer)
     return 0
 end
 
+-- Occlusion of a position whose square is not loaded, estimated from the meta grid.
 local function unloadedSquare(observer, x, y, z)
     local occlusion = 0
     if getWorld():getMetaGrid():getRoomAt(math.floor(x), math.floor(y), math.floor(z)) then
@@ -60,6 +64,7 @@ local function unloadedSquare(observer, x, y, z)
     return math.min(occlusion + UNLOADED_SQUARE_LISTENER_OUTDOORS, MAX_OCCLUSION)
 end
 
+-- Replicates the occlusion the engine applies to a 3D sound at a position, see docs/ENGINE_NOTES.md.
 function MaelstromMusic.Playback.Occlusion.direct(observer, x, y, z)
     local square = getCell():getGridSquare(x, y, z)
     if not square then

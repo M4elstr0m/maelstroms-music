@@ -17,6 +17,7 @@ local discoveryCounter = 0
 local tickCounter = 0
 local finishedCounters = {}
 
+-- Stops and forgets every cached device sound.
 local function stopAllEntries()
     local entries = MaelstromMusic.Playback.Cache.entries
     for index = #entries, 1, -1 do
@@ -28,42 +29,50 @@ local function stopAllEntries()
     end
 end
 
+-- Stops every device sound as soon as there is no player, which means back at the menu.
 local function checkPlayerGone()
     if #MaelstromMusic.Playback.Cache.entries > 0 and not getPlayer() then
         stopAllEntries()
     end
 end
 
+-- Stops an entry and removes it from the cache.
 local function dropEntry(entry, index)
     MaelstromMusic.Playback.Device.stopSounds(entry)
     MaelstromMusic.Playback.Cache.removeAt(index)
     finishedCounters[entry] = nil
 end
 
+-- Whether the device of an entry still exists.
 local function isPresent(entry)
     return entry.device ~= nil and MaelstromMusic.Playback.Device.isPresent(entry.device, entry.deviceData)
 end
 
+-- Whether the device is still on and tuned to the station of the entry.
 local function isStillTuned(entry)
     return entry.deviceData:getIsTurnedOn() and
         MaelstromMusic.Playback.Cache.stationForFrequency(entry.deviceData:getChannel()) == entry.stationId
 end
 
+-- Whether the device of an entry is a vehicle radio.
 local function isVehicleDevice(entry)
     return entry.deviceData.isVehicleDevice and entry.deviceData:isVehicleDevice()
 end
 
+-- Mutes an entry whose device vanished, keeping it for a moved device to adopt.
 local function orphanEntry(entry)
     entry.orphanedAt = getTimestampMs()
     MaelstromMusic.Playback.Device.muteSounds(entry)
 end
 
+-- Drops an orphaned entry once the adoption grace period ends or its track stops.
 local function updateOrphan(entry, index)
     if getTimestampMs() - entry.orphanedAt > ORPHAN_GRACE_MS or not entry.sound:isPlaying() then
         dropEntry(entry, index)
     end
 end
 
+-- Advances the fades of an entry and its companion.
 local function fadeSounds(entry)
     entry.sound:updateFade()
     if entry.companion then
@@ -71,6 +80,7 @@ local function fadeSounds(entry)
     end
 end
 
+-- Applies a mode to an entry and its companion.
 local function applyMode(entry, mode)
     local Device = MaelstromMusic.Playback.Device
     Device.applyMode(entry.sound, mode)
@@ -79,6 +89,7 @@ local function applyMode(entry, mode)
     end
 end
 
+-- Sets the volume of an entry, through the stage when staged.
 local function applyVolume(entry, mode, volume, listener, now)
     if listener and entry.companion then
         MaelstromMusic.Playback.Staging.plan(entry, MaelstromMusic.Playback.Device.isPositional(mode), volume, listener, now)
@@ -87,6 +98,7 @@ local function applyVolume(entry, mode, volume, listener, now)
     entry.sound:setVolume(volume)
 end
 
+-- Volume of a world device at a distance, following the vanilla radio dropoff curve.
 local function dropoffVolume(entry, distance)
     local dropoffRange = (MAX_RANGE - MIN_RANGE) * 0.2 + entry.deviceData:getDeviceVolume() * entry.sound.volumeModifier * 2.5 * (MAX_RANGE - MIN_RANGE) * 0.8
     local volumeModifier = ((MIN_RANGE + dropoffRange - distance) / dropoffRange)
@@ -95,6 +107,8 @@ local function dropoffVolume(entry, distance)
     return entry.deviceData:getDeviceVolume() * volumeModifier
 end
 
+-- Per entry update: orphan handling, tuning, mode, range, volume and restart of a finished track.
+-- Restarts the entry when the stereo safe option changed.
 local function updateEntry(entry, index, player, listener, now)
     if entry.orphanedAt then
         updateOrphan(entry, index)
@@ -152,6 +166,7 @@ local function updateEntry(entry, index, player, listener, now)
     end
 end
 
+-- Every fifth tick: discovers devices every 100 ticks, then updates every cached entry.
 function MaelstromMusic.Playback.Tick.onTick()
     tickCounter = tickCounter + 1
     discoveryCounter = discoveryCounter + 1
@@ -185,6 +200,7 @@ function MaelstromMusic.Playback.Tick.onTick()
     end
 end
 
+-- Every rendered frame: steps the stage so staged emitters follow the head turns smoothly.
 function MaelstromMusic.Playback.Tick.onRender()
     local entries = MaelstromMusic.Playback.Cache.entries
     local player = getPlayer()
