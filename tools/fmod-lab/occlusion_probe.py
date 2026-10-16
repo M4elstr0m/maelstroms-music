@@ -10,6 +10,7 @@ FACTORS = (0.0, 0.24, 0.33, 0.59, 0.79, 0.9)
 
 
 def main():
+    """Prints the level change per frequency band for each occlusion factor."""
     signal = os.path.join(tempfile.mkdtemp(), "signal.wav")
     lab.write_test_signal(signal, BANDS)
     reference = None
@@ -17,6 +18,7 @@ def main():
     print("occlusion " + "".join(f"{band:>9d}Hz" for band in BANDS))
     for factor in FACTORS:
         def setup(channel, factor=factor):
+            """Configures the channel with a wide distance range and the occlusion factor under test."""
             lab.fmod.FMOD_Channel_Set3DMinMaxDistance(channel, 100, 10000)
             lab.fmod.FMOD_Channel_Set3DOcclusion(channel, factor, 0.0)
         audio = lab.render(signal, (0, 0, 3), (0, 0, 1), (0, 1, 0), channel_setup=setup)

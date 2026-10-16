@@ -11,17 +11,20 @@ local GLIDE_MS = 150
 local VOLUME_EPSILON = 0.002
 local FIRST_STEP_ALPHA = 1 - math.exp(-1)
 
+-- Position and facing direction of the player.
 function MaelstromMusic.Playback.Staging.pose(player, frame)
     local forwardX, forwardY = MaelstromMusic.Playback.Stage.forward(frame, player)
     return { x = player:getX(), y = player:getY(), z = player:getZ(), forwardX = forwardX, forwardY = forwardY }
 end
 
+-- Pose of the player plus the occlusion observer.
 function MaelstromMusic.Playback.Staging.listener(player, frame)
     local listener = MaelstromMusic.Playback.Staging.pose(player, frame)
     listener.observer = MaelstromMusic.Playback.Occlusion.observer(player)
     return listener
 end
 
+-- Updates the placement and gain of one stage emitter, searching again at most every 400 ms while unmatched.
 local function placeSide(state, listener, side, target, now)
     local Stage = MaelstromMusic.Playback.Stage
     local searchAgain = not state.unmatched or now - (state.searchedAt or 0) >= SEARCH_INTERVAL_MS
@@ -36,6 +39,8 @@ local function placeSide(state, listener, side, target, now)
     state.gain = Stage.mutedGain(placement.deficit)
 end
 
+-- Per tick: computes the target occlusion and the placement of both stage emitters,
+-- or flattens a device that must not be positional.
 function MaelstromMusic.Playback.Staging.plan(entry, positional, volume, listener, now)
     local stage = entry.stage or { sides = { [LEFT_SIDE] = {}, [RIGHT_SIDE] = {} } }
     entry.stage = stage
@@ -62,6 +67,7 @@ function MaelstromMusic.Playback.Staging.plan(entry, positional, volume, listene
     MaelstromMusic.Playback.Staging.step(entry, listener, now)
 end
 
+-- Moves the volume of a voice toward its target, skipping changes below the epsilon.
 local function follow(sound, current, target, alpha)
     local gain = current + (target - current) * alpha
     local settled = math.abs(target - gain) <= VOLUME_EPSILON
@@ -74,6 +80,7 @@ local function follow(sound, current, target, alpha)
     return gain
 end
 
+-- Exponential approach of a value to its target over the elapsed time.
 local function ease(current, target, elapsed)
     if not current or elapsed <= 0 then
         return current or target
@@ -81,6 +88,7 @@ local function ease(current, target, elapsed)
     return current + (target - current) * (1 - math.exp(-elapsed / GLIDE_MS))
 end
 
+-- Glides one stage emitter toward its placement and moves it.
 local function moveVoice(sound, pose, side, state, z, elapsed)
     state.shownRadius = ease(state.shownRadius, state.radius, elapsed)
     state.shownAngle = ease(state.shownAngle, state.candidate.angleOffset, elapsed)
@@ -89,6 +97,7 @@ local function moveVoice(sound, pose, side, state, z, elapsed)
     sound:moveTo(x, y, z)
 end
 
+-- Per frame: glides both emitters and smooths their gains from the current pan.
 function MaelstromMusic.Playback.Staging.step(entry, pose, now)
     local stage = entry.stage
     if not stage or not stage.positional or not entry.companion then

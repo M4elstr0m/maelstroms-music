@@ -12,6 +12,7 @@ local queue = {}
 local queuedNames = {}
 local phase = PHASE_MENU
 
+-- Decodes a track by playing it silently for an instant, which fills the sound cache of the engine.
 local function warmTrack(soundName)
     if not GameSounds.isKnownSound(soundName) then
         return false
@@ -26,10 +27,12 @@ local function warmTrack(soundName)
     return true
 end
 
+-- Whether a track was already pre-decoded.
 function MaelstromMusic.Playback.Warmup.isWarmed(soundName)
     return soundName ~= nil and warmed[soundName] == true
 end
 
+-- Queues a track for pre-decoding.
 function MaelstromMusic.Playback.Warmup.request(soundName)
     if not soundName or warmed[soundName] or queuedNames[soundName] then
         return
@@ -38,6 +41,7 @@ function MaelstromMusic.Playback.Warmup.request(soundName)
     table.insert(queue, soundName)
 end
 
+-- Warms one queued track per frame, once the loading screen has started.
 local function onRenderTick()
     if #queue == 0 or phase == PHASE_MENU then
         return

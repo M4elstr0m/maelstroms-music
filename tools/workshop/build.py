@@ -41,10 +41,12 @@ ALLOWED_TAGS = (
 
 
 class BuildError(Exception):
+    """Raised for a problem in the sources, reported without a stack trace."""
     pass
 
 
 def load_item():
+    """Loads and validates workshop/item.json."""
     item = json.loads(ITEM.read_text(encoding="utf-8"))
     if not re.fullmatch(r"\d+", str(item.get("id", ""))):
         raise BuildError("workshop/item.json: id must be the numeric Workshop id")
@@ -59,6 +61,7 @@ def load_item():
 
 
 def description_lines():
+    """Converts workshop/description.md to the BBCode lines of the description."""
     try:
         return bbcode.convert(DESCRIPTION.read_text(encoding="utf-8"))
     except bbcode.ConversionError as error:
@@ -66,6 +69,7 @@ def description_lines():
 
 
 def render_workshop_txt(item, lines):
+    """Renders workshop.txt in the field order the game's uploader writes."""
     header = [
         f"version={WORKSHOP_TXT_VERSION}",
         f"id={item['id']}",
@@ -79,10 +83,12 @@ def render_workshop_txt(item, lines):
 
 
 def load_releases():
+    """Parses CHANGELOG.md."""
     return changelog.parse(CHANGELOG.read_text(encoding="utf-8"))
 
 
 def change_note(version=None, plain=False):
+    """Renders the change note of a version (default: the newest) as BBCode, or as plain text."""
     try:
         release = changelog.select(load_releases(), version)
     except LookupError as error:
@@ -94,6 +100,7 @@ def change_note(version=None, plain=False):
 
 
 def release_notes(version=None):
+    """Renders the release notes of a version (default: the newest) as Markdown."""
     try:
         release = changelog.select(load_releases(), version)
     except LookupError as error:
@@ -102,19 +109,23 @@ def release_notes(version=None):
 
 
 def mod_version():
+    """The modversion declared in mod.info."""
     match = re.search(r"^modversion=(.+)$", MOD_INFO.read_text(encoding="utf-8"), re.MULTILINE)
     return match.group(1).strip()
 
 
 def release_title():
+    """The GitHub release title: the version and the Workshop title."""
     return f"v{mod_version()} - {load_item()['title']}"
 
 
 def release_body():
+    """The GitHub release page, from its template with the title filled in."""
     return RELEASE_TEMPLATE.read_text(encoding="utf-8").replace("{{title}}", release_title())
 
 
 def check_changelog_matches_mod_info():
+    """Raises when the newest released changelog section is not the version in mod.info."""
     latest = changelog.latest_released(load_releases())
     if latest is None or latest.version != mod_version():
         found = latest.version if latest else "none"
@@ -122,10 +133,12 @@ def check_changelog_matches_mod_info():
 
 
 def build_text():
+    """The full content workshop.txt should have."""
     return render_workshop_txt(load_item(), description_lines())
 
 
 def copy_to_clipboard(text):
+    """Copies text with the first clipboard tool found and returns its name."""
     for command in (["wl-copy"], ["xclip", "-selection", "clipboard"], ["xsel", "--clipboard", "--input"]):
         if shutil.which(command[0]):
             subprocess.run(command, input=text.encode("utf-8"), check=True)
@@ -134,6 +147,7 @@ def copy_to_clipboard(text):
 
 
 def draft_entries():
+    """Drafts changelog entries from the conventional commits since the last tag."""
     tags = subprocess.run(["git", "-C", str(ROOT), "describe", "--tags", "--abbrev=0"], capture_output=True, text=True)
     revisions = f"{tags.stdout.strip()}..HEAD" if tags.returncode == 0 else "HEAD"
     log = subprocess.run(["git", "-C", str(ROOT), "log", "--first-parent", "--format=%s", revisions],
@@ -142,6 +156,7 @@ def draft_entries():
 
 
 def run(arguments):
+    """Runs the command chosen on the command line."""
     if arguments.command == "build":
         WORKSHOP_TXT.write_text(build_text(), encoding="utf-8", newline="\n")
         print(f"wrote {WORKSHOP_TXT.relative_to(ROOT)}")
@@ -164,6 +179,7 @@ def run(arguments):
 
 
 def main():
+    """Parses the command line and runs the command, turning a BuildError into an exit code."""
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("command", nargs="?", default="build", choices=("build", "check", "changenote", "release-notes", "github-release", "draft"))
     parser.add_argument("--version")

@@ -15,6 +15,7 @@ local ORPHAN_ADOPT_RADIUS = 20
 
 local nextByStation = {}
 
+-- Keeps the next tracks of a station queued and requests their pre-decoding.
 local function ensurePicks(stationId, station)
     local picks = nextByStation[stationId]
     if not picks then
@@ -33,6 +34,7 @@ local function ensurePicks(stationId, station)
     end
 end
 
+-- Queues and pre-decodes the first tracks of up to 12 stations.
 local function primeStations()
     local count = 0
     local seeded = 0
@@ -53,6 +55,7 @@ local function primeStations()
     end
 end
 
+-- World position of a device: its vehicle, the player carrying it or its own square.
 local function locate(device, deviceData)
     if deviceData.isVehicleDevice and deviceData:isVehicleDevice() then
         local vehicle = deviceData:getParent() and deviceData:getParent():getVehicle()
@@ -72,6 +75,7 @@ end
 
 MaelstromMusic.Playback.Device.locate = locate
 
+-- Whether the device still exists in the world, in a container or in a vehicle.
 function MaelstromMusic.Playback.Device.isPresent(device, deviceData)
     if deviceData.isVehicleDevice and deviceData:isVehicleDevice() then
         local part = deviceData:getParent()
@@ -85,6 +89,7 @@ end
 
 local VOLUME_MODIFIER = { held = 0.6, vehicleInside = 0.8, vehicleOutside = 0.3, world = 0.4 }
 
+-- Playback mode of a device: held, vehicleInside, vehicleOutside or world.
 function MaelstromMusic.Playback.Device.modeOf(deviceData)
     if deviceData.isInventoryDevice and deviceData:isInventoryDevice() then
         return "held"
@@ -100,10 +105,12 @@ function MaelstromMusic.Playback.Device.modeOf(deviceData)
     return "world"
 end
 
+-- Whether a mode plays in the world rather than flat.
 function MaelstromMusic.Playback.Device.isPositional(mode)
     return mode == "world" or mode == "vehicleOutside"
 end
 
+-- Applies the loudness modifier and 2D or 3D playback of a mode to a sound.
 function MaelstromMusic.Playback.Device.applyMode(sound, mode)
     local modifier = VOLUME_MODIFIER[mode]
     if sound.volumeModifier ~= modifier then
@@ -115,6 +122,7 @@ function MaelstromMusic.Playback.Device.applyMode(sound, mode)
     end
 end
 
+-- Sets the emitter, mode and position of a sound for a device, vehicle devices share the vehicle emitter unless staged.
 local function configureSound(sound, device, deviceData, staged)
     local mode = MaelstromMusic.Playback.Device.modeOf(deviceData)
     if not staged and deviceData.isVehicleDevice and deviceData:isVehicleDevice() then
@@ -131,6 +139,7 @@ local function configureSound(sound, device, deviceData, staged)
     end
 end
 
+-- Stops the sound of an entry and its companion.
 function MaelstromMusic.Playback.Device.stopSounds(entry)
     entry.sound:stop()
     if entry.companion then
@@ -138,6 +147,7 @@ function MaelstromMusic.Playback.Device.stopSounds(entry)
     end
 end
 
+-- Mutes the sound of an entry and its companion.
 function MaelstromMusic.Playback.Device.muteSounds(entry)
     entry.sound:setVolume(0)
     if entry.companion then
@@ -145,10 +155,12 @@ function MaelstromMusic.Playback.Device.muteSounds(entry)
     end
 end
 
+-- Whether devices play through the stereo safe left and right emitters.
 function MaelstromMusic.Playback.Device.isStaged()
     return MaelstromMusic.Options.stereoSafePositioning()
 end
 
+-- Finds a playing orphaned entry of this device or of the same station nearby.
 local function findOrphan(stationId, deviceData, x, y)
     local own = MaelstromMusic.Playback.Cache.get(deviceData)
     if own and own.orphanedAt then
@@ -160,6 +172,7 @@ local function findOrphan(stationId, deviceData, x, y)
     return MaelstromMusic.Playback.Cache.takeOrphan(stationId, x, y, ORPHAN_ADOPT_RADIUS)
 end
 
+-- Re-attaches a playing orphaned entry to a moved device so the track keeps playing.
 local function adoptOrphan(stationId, device, deviceData)
     local x, y, z = locate(device, deviceData)
     local entry = findOrphan(stationId, deviceData, x, y)
@@ -179,6 +192,7 @@ local function adoptOrphan(stationId, device, deviceData)
     return true
 end
 
+-- Starts a track on a sound at a volume, with the fade in of the station.
 local function startSound(sound, trackName, station, volume)
     sound:setVolume(volume)
     sound:setFadeLevel(station.fade and 0 or 1)
@@ -188,6 +202,7 @@ local function startSound(sound, trackName, station, volume)
     end
 end
 
+-- Gives a sound back its own emitter after it used the one of a vehicle.
 local function releaseSharedEmitter(sound)
     if sound.sharedEmitter then
         sound:stop()
@@ -196,6 +211,7 @@ local function releaseSharedEmitter(sound)
     end
 end
 
+-- Creates or removes the companion sound that the stereo safe mode needs.
 local function prepareCompanion(entry, device, deviceData, staged)
     if not staged then
         if entry.companion then
@@ -209,6 +225,7 @@ local function prepareCompanion(entry, device, deviceData, staged)
     configureSound(entry.companion, device, deviceData, true)
 end
 
+-- Starts the next track of a station on a device, and on its companion when staged, together.
 function MaelstromMusic.Playback.Device.playStation(stationId, device)
     local deviceData = device:getDeviceData()
     if not deviceData then
@@ -267,6 +284,7 @@ function MaelstromMusic.Playback.Device.playStation(stationId, device)
     end
 end
 
+-- Starts or adopts playback when a powered device is tuned to one of the stations.
 function MaelstromMusic.Playback.Device.ensurePlaying(device)
     if not device or not device.getDeviceData then
         return

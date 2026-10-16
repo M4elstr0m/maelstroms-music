@@ -11,6 +11,7 @@ local cachedFrame = "screen"
 local refreshedAt = nil
 local viewpointFailed = false
 
+-- Asks Viewpoint which view comes next, and gives up for the session after a failure.
 local function readNextView()
     local view = Viewpoint and Viewpoint.View
     if viewpointFailed or not view then
@@ -24,6 +25,7 @@ local function readNextView()
     return nextView
 end
 
+-- Returns "look" while the first or third person view of Viewpoint is active, otherwise "screen".
 local function detect()
     local nextView = readNextView()
     if nextView == VIEW_NEXT_FROM_FIRST_PERSON or nextView == VIEW_NEXT_FROM_THIRD_PERSON then
@@ -32,6 +34,7 @@ local function detect()
     return "screen"
 end
 
+-- Returns the listener frame, refreshed at most every 500 ms.
 function MaelstromMusic.Playback.ListenerFrame.current()
     local now = getTimestampMs()
     if not refreshedAt or now - refreshedAt >= REFRESH_MS then

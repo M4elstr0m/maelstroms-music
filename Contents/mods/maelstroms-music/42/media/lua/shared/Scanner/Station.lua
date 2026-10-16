@@ -12,6 +12,7 @@ local KIND_ID_PREFIX = {
     death = "death_",
 }
 
+-- Strips a name down to alphanumerics so it can be part of a station id.
 local function sanitizeIdentifier(str)
     local out = string.gsub(str, "[^%w]", "")
     if out == "" then
@@ -20,11 +21,13 @@ local function sanitizeIdentifier(str)
     return out
 end
 
+-- Returns the lowercase extension of a file name, or nil.
 local function getExtension(fileName)
     local ext = string.match(fileName, "%.([%a%d]+)$")
     return ext and string.lower(ext) or nil
 end
 
+-- Converts a frequency in MHz to internal units on the dial step, or nil when invalid.
 local function normalizeFrequency(value)
     if type(value) ~= "number" or value <= 0 then
         return nil
@@ -33,6 +36,7 @@ local function normalizeFrequency(value)
     return math.floor((value * 1000) / step + 0.5) * step
 end
 
+-- Lists the playable audio files of a station folder, sorted, skipping names with a comma.
 local function collectTrackFiles(modId, baseDir, name)
     local trackFiles = {}
     for _, trackFile in ipairs(MaelstromMusic.Fs.listFilesFrom(modId, baseDir .. "/" .. name)) do
@@ -49,6 +53,7 @@ local function collectTrackFiles(modId, baseDir, name)
     return trackFiles
 end
 
+-- Validates one station JSON file, returns its station id and table, or nil after logging the reason.
 function MaelstromMusic.Scanner.Station.tryLoad(modId, baseDir, kind, fileName)
     local name = string.match(fileName, "^(.+)%.json$")
     if not name then

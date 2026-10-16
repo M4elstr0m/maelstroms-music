@@ -5,6 +5,7 @@ MaelstromMusic.Playback.Discovery = {}
 
 local DISCOVERY_RADIUS = 20
 
+-- Starts playback on powered radios that are held, in the vehicle of the player or within 20 tiles.
 function MaelstromMusic.Playback.Discovery.scan()
     local player = getPlayer()
     if not player then

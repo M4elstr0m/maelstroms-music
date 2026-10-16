@@ -2,6 +2,7 @@ require "Namespace"
 
 MaelstromMusic.Json = {}
 
+-- Returns the position of the first non whitespace character from pos.
 local function skipWhitespace(str, pos)
     local _, stop = string.find(str, "^[ \t\r\n]*", pos)
     return stop + 1
@@ -20,6 +21,7 @@ local escapeMap = {
 
 local parseValue
 
+-- Parses a JSON string at pos (escapes and \u sequences become UTF-8), returns it and the next position.
 local function parseString(str, pos)
     local out = {}
     local i = pos + 1
@@ -60,6 +62,7 @@ local function parseString(str, pos)
     error("MaelstromMusic.Json: unterminated string at position " .. pos)
 end
 
+-- Parses a JSON number at pos, returns it and the next position.
 local function parseNumber(str, pos)
     local _, stop, numStr = string.find(str, "^(-?%d+%.?%d*[eE]?[-+]?%d*)", pos)
     if not numStr then
@@ -68,6 +71,7 @@ local function parseNumber(str, pos)
     return tonumber(numStr), stop + 1
 end
 
+-- Parses a JSON object at pos into a table, returns it and the next position.
 local function parseObject(str, pos)
     local obj = {}
     local i = skipWhitespace(str, pos + 1)
@@ -101,6 +105,7 @@ local function parseObject(str, pos)
     end
 end
 
+-- Parses a JSON array at pos into a table, returns it and the next position.
 local function parseArray(str, pos)
     local arr = {}
     local i = skipWhitespace(str, pos + 1)
@@ -124,6 +129,7 @@ local function parseArray(str, pos)
     end
 end
 
+-- Parses any JSON value at pos, returns it and the next position.
 parseValue = function(str, pos)
     local c = string.sub(str, pos, pos)
     if c == "\"" then
@@ -145,6 +151,7 @@ parseValue = function(str, pos)
     end
 end
 
+-- Decodes JSON text, returning nil and an error message when the text is empty or invalid.
 function MaelstromMusic.Json.decode(str)
     if not str or str == "" then
         return nil, "empty input"

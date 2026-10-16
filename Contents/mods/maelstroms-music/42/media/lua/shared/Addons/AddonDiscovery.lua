@@ -5,6 +5,7 @@ require "Addons/AddonManifest"
 
 MaelstromMusic.Addons.Discovery = {}
 
+-- Whether the mod.info of a mod lists this mod in its require line.
 local function requiresBaseMod(modId)
     local ok, info = pcall(getModInfoByID, modId)
     if not ok or not info then
@@ -22,6 +23,7 @@ local function requiresBaseMod(modId)
     return false
 end
 
+-- Returns the display name of a mod, falling back to its id.
 local function displayName(modId)
     local ok, info = pcall(getModInfoByID, modId)
     if ok and info then
@@ -33,6 +35,7 @@ local function displayName(modId)
     return modId
 end
 
+-- Returns the active addons (marker file present and base mod required), sorted by mod id.
 function MaelstromMusic.Addons.Discovery.scan()
     local addons = {}
 

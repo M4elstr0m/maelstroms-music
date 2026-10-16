@@ -23,10 +23,12 @@ P = ctypes.c_void_p
 
 
 class Vec(ctypes.Structure):
+    """A 3D vector in the layout FMOD expects."""
     _fields_ = [("x", ctypes.c_float), ("y", ctypes.c_float), ("z", ctypes.c_float)]
 
 
 def _load():
+    """Loads the game's own libfmod and declares the signatures of the calls the probes use."""
     lib = ctypes.CDLL(os.path.join(os.path.expanduser(NATIVES), "libfmod.so"))
     c_float, c_int = ctypes.c_float, ctypes.c_int
     signatures = {
@@ -58,6 +60,7 @@ fmod = _load()
 
 
 def create_system():
+    """Creates an FMOD system, trying header versions until the library accepts one."""
     system = P()
     for minor in range(0, 10):
         for patch in range(0, 60):
@@ -67,6 +70,7 @@ def create_system():
 
 
 def write_test_signal(path, tones, seconds=2):
+    """Writes a stereo WAV made of sine tones, the signal the probes play."""
     t = np.arange(int(seconds * RATE)) / RATE
     signal = sum(np.sin(2 * np.pi * f * t + i) for i, f in enumerate(tones)) * 0.6 / len(tones)
     pcm = (np.stack([signal, signal], axis=1) * 32767).astype("<i2")
@@ -78,6 +82,7 @@ def write_test_signal(path, tones, seconds=2):
 
 
 def _read_wav(path):
+    """Reads a PCM or float WAV file into an array of shape (frames, channels)."""
     with open(path, "rb") as f:
         data = f.read()
     position, fmt, samples = 12, None, None
@@ -97,6 +102,7 @@ def _read_wav(path):
 
 def render(signal, source, listener_forward, listener_up, mode_3d=True, channel_setup=None, init_flags=INIT_FLAGS_GAME,
            speaker_mode=SPEAKERMODE_STEREO, mix_rate=RATE):
+    """Plays the signal once through the game's FMOD init settings with the listener and source given, and returns the rendered audio."""
     output = tempfile.mktemp(suffix=".wav")
     system = create_system()
     fmod.FMOD_System_SetOutput(system, OUTPUT_WAVWRITER_NRT)
@@ -126,10 +132,12 @@ def render(signal, source, listener_forward, listener_up, mode_3d=True, channel_
 
 
 def rms_db(channel):
+    """Level of a channel in dB."""
     return 20 * math.log10(float(np.sqrt(np.mean(channel * channel))) + 1e-12)
 
 
 def band_level(channel, frequency):
+    """Amplitude of a channel around one frequency."""
     spectrum = np.abs(np.fft.rfft(channel * np.hanning(len(channel)))) * 2 / len(channel)
     k = int(round(frequency * len(channel) / RATE))
     return float(spectrum[max(0, k - 2):k + 3].max())

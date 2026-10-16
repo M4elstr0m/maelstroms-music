@@ -50,7 +50,8 @@ Design principles: never modify base game files, work through Lua and generated 
 
 The code must always be clean and professional.
 
-- No comments, except a short line explaining a non-obvious WHY (hidden engine constraint, workaround, subtle invariant). Never describe what the code does. No commented-out code, no TODO markers, no debug leftovers.
+- Every function has a one or two line comment above it (a docstring in Python) saying what it does and returns, nothing more. Keep it in sync when the function changes, and add one to every new function. Test methods named as a sentence and engine stubs in the tests are exempt.
+- Inside a function, comment only a non-obvious WHY (hidden engine constraint, workaround, subtle invariant). No commented-out code, no TODO markers, no debug leftovers.
 - Self-documenting names. Functions are small and do one thing. Prefer guard clauses over deep nesting.
 - Follow the existing style: 4 space indentation, double quotes, `local` for everything that is not part of the public namespace, constants in `UPPER_SNAKE_CASE` at the top of the file, one module per file under the `MaelstromMusic.<Area>.<Module>` hierarchy, `require` lines at the top.
 - Wrap calls into engine APIs that can fail in `MaelstromMusic.Safe.call` and report through `MaelstromMusic.Log.write`. Do not swallow errors silently.

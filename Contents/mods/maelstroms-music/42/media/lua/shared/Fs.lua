@@ -2,6 +2,7 @@ require "Namespace"
 
 MaelstromMusic.Fs = {}
 
+-- Reads a text file of the given mod and returns its content, or nil when it is missing or unreadable.
 function MaelstromMusic.Fs.readFileFrom(modId, relativePath)
     local ok, reader = pcall(getModFileReader, modId, relativePath, false)
     if not ok or not reader then
@@ -23,6 +24,7 @@ function MaelstromMusic.Fs.readFileFrom(modId, relativePath)
     return table.concat(lines, "\n")
 end
 
+-- Lists the file names inside a mod directory, or an empty table when it cannot be listed.
 function MaelstromMusic.Fs.listFilesFrom(modId, relativePath)
     local ok, result = pcall(listFilesInModDirectory, modId, relativePath)
     if not ok or not result then
@@ -35,14 +37,17 @@ function MaelstromMusic.Fs.listFilesFrom(modId, relativePath)
     return files
 end
 
+-- Reads a file of this mod, see readFileFrom.
 function MaelstromMusic.Fs.readFile(relativePath)
     return MaelstromMusic.Fs.readFileFrom(MaelstromMusic.MOD_ID, relativePath)
 end
 
+-- Lists a directory of this mod, see listFilesFrom.
 function MaelstromMusic.Fs.listFiles(relativePath)
     return MaelstromMusic.Fs.listFilesFrom(MaelstromMusic.MOD_ID, relativePath)
 end
 
+-- Writes content into this mod's common folder, replacing the file, and returns whether it succeeded.
 function MaelstromMusic.Fs.writeFile(relativePath, content)
     local ok, writer = pcall(getModFileWriter, MaelstromMusic.MOD_ID, relativePath, true, false)
     if not ok or not writer then

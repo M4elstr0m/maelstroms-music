@@ -6,6 +6,7 @@ MaelstromMusic.Channels = {}
 MaelstromMusic.Channels.channelByUUID = {}
 MaelstromMusic.Channels.stationByUUID = {}
 
+-- Gives every registered channel a fresh airing broadcast showing the station title.
 function MaelstromMusic.Channels.refreshBroadcasts()
     for uuid, channel in pairs(MaelstromMusic.Channels.channelByUUID) do
         local stationId = MaelstromMusic.Channels.stationByUUID[uuid]
@@ -20,6 +21,7 @@ end
 
 Events.EveryTenMinutes.Add(MaelstromMusic.Channels.refreshBroadcasts)
 
+-- Registers a tunable channel for each scanned station when the game loads its radio scripts.
 function MaelstromMusic.Channels.onLoadRadioScripts(_scriptManager, _isNewGame)
     MaelstromMusic.Safe.call("channel registration failed", function()
         MaelstromMusic.Channels.channelByUUID = {}

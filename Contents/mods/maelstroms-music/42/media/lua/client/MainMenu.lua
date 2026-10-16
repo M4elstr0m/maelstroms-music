@@ -25,15 +25,18 @@ local fadeDeadlineAt = 0
 local startedAt = 0
 local nextTrackAt = 0
 
+-- The UI emitter, the one that plays at the main menu.
 local function menuEmitter()
     return getSoundManager():getUIEmitter()
 end
 
+-- Whether a main menu theme is available.
 local function hasMainMenuTracks()
     local station = MaelstromMusic.MainMenuStation
     return station ~= nil and #station.tracks > 0
 end
 
+-- Picks the next theme track, never the one just played.
 local function pickNextTrack()
     local station = MaelstromMusic.MainMenuStation
     if not station then
@@ -42,11 +45,13 @@ local function pickNextTrack()
     return MaelstromMusic.Playback.Track.chooseNext(station, currentIndex)
 end
 
+-- Keeps the claim on the vanilla soundtrack in line with whether the theme should play.
 local function updateClaim()
     MaelstromMusic.VanillaMusic.claim(CLAIM_KEY, active and hasMainMenuTracks())
     MaelstromMusic.VanillaMusic.refresh()
 end
 
+-- Music option volume, ducked while the character voice preview plays.
 local function themeVolume()
     local volume = MaelstromMusic.VanillaMusic.optionVolume()
     if MaelstromMusic.VoicePreview.isPlaying() then
@@ -55,6 +60,7 @@ local function themeVolume()
     return volume
 end
 
+-- Keeps the FMOD music state on MainMenu and stops vanilla music, except during the voice preview.
 local function holdMusicState()
     if MaelstromMusic.VoicePreview.isPlaying() then
         return
@@ -65,6 +71,7 @@ local function holdMusicState()
     end)
 end
 
+-- Stops and forgets the current theme track.
 local function discardSound()
     if sound then
         MaelstromMusic.Safe.call("could not stop the main menu theme", function()
@@ -77,6 +84,7 @@ local function discardSound()
     updateClaim()
 end
 
+-- Starts a theme track with a fade in.
 local function startTrack(trackName, index)
     if not trackName then
         return
@@ -102,6 +110,7 @@ local function startTrack(trackName, index)
     updateClaim()
 end
 
+-- Fades the theme out when the game starts, or discards it when nothing is playing.
 local function beginSwap()
     local isPlaying = false
     MaelstromMusic.Safe.call("could not read the main menu theme playback state", function()
@@ -123,15 +132,18 @@ local function beginSwap()
     end
 end
 
+-- Activates the theme when the main menu opens.
 local function onMainMenuEnter()
     active = true
 end
 
+-- Deactivates the theme and fades it out as the game starts.
 local function onGameStart()
     active = false
     beginSwap()
 end
 
+-- Re-applies the vanilla mute at the early loading events, the only ones that run during the synchronous load.
 local function silenceVanillaMusic()
     MaelstromMusic.VanillaMusic.refresh()
     if active and (loadedTrack or hasMainMenuTracks()) then
@@ -139,6 +151,7 @@ local function silenceVanillaMusic()
     end
 end
 
+-- Per frame: completes the fade out, starts the next track after its gap, detects the end of a track.
 local function onRenderTick()
     MaelstromMusic.VanillaMusic.refresh()
 

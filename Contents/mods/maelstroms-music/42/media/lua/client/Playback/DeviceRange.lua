@@ -5,6 +5,7 @@ MaelstromMusic.Playback.DeviceRange = {}
 
 local FREQ_STEP = MaelstromMusic.FREQ_STEP
 
+-- Returns an id that stays the same for a device across sessions, or nil.
 local function stableDeviceId(deviceData)
     local ok, vehicle = pcall(function()
         return deviceData:isVehicleDevice() and deviceData:getParent() and deviceData:getParent():getVehicle()
@@ -23,6 +24,7 @@ local function stableDeviceId(deviceData)
     return nil
 end
 
+-- Stable string hash used to offset the window of a device.
 local function seedHash(str)
     local hash = 5381
     for i = 1, #str do
@@ -31,6 +33,8 @@ local function seedHash(str)
     return hash
 end
 
+-- Widens the tunable range of a device with a per device window of the extended band,
+-- so every station is reachable when there are more than the universal band holds.
 function MaelstromMusic.Playback.DeviceRange.ensureWindow(deviceData, totalStationCount)
     local extendedMin = MaelstromMusic.Frequency.EXTENDED_MIN
     local extendedMax = MaelstromMusic.Frequency.EXTENDED_MAX

@@ -17,9 +17,11 @@ STAGE_ANGLE = math.radians(40)
 
 
 def ears(signal, distance, side):
+    """Levels of the left and right ear for one stage emitter, as a PulseAudio stereo output of the 5.1 mix."""
     source = (distance * math.cos(STAGE_ANGLE), distance * math.sin(STAGE_ANGLE) * side, 0.0)
 
     def engine_setup(channel):
+        """Applies the distance settings the game uses for radios."""
         lab.fmod.FMOD_Channel_Set3DMinMaxDistance(channel, 2, 75)
         lab.fmod.FMOD_Channel_Set3DLevel(channel, 1.0)
 
@@ -29,6 +31,7 @@ def ears(signal, distance, side):
 
 
 def main():
+    """Prints the level of each ear for the two emitter stage across pan values."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--distance", type=float, default=6.0)
     args = parser.parse_args()

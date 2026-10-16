@@ -7,10 +7,12 @@ require "Playback/Stage"
 local Stage, Occlusion = MaelstromMusic.Playback.Stage, MaelstromMusic.Playback.Occlusion
 
 local failures = 0
+-- Prints the result of one assertion and counts failures.
 local function check(description, condition)
     print((condition and "pass  " or "FAIL  ") .. description)
     if not condition then failures = failures + 1 end
 end
+-- Whether two numbers are equal within a tolerance.
 local function near(a, b, tolerance) return math.abs(a - b) <= (tolerance or 1e-6) end
 
 check("a source on the left of the forward axis pans left", Stage.pan(0, -1, 1, 0) == -1)
@@ -41,6 +43,7 @@ local clock = 0
 getTimestampMs = function() return clock end
 require "Playback/ListenerFrame"
 local ListenerFrame = MaelstromMusic.Playback.ListenerFrame
+-- Returns the listener frame after a refresh while Viewpoint reports the given next view.
 local function frameWhen(nextView)
     clock = clock + 1000
     Viewpoint = nextView and { View = { next = function() return nextView end } } or nil

@@ -33,14 +33,17 @@ P, c_char_p, u64, u32, i32 = ctypes.c_void_p, ctypes.c_char_p, ctypes.c_uint64, 
 
 
 class StringArray(ctypes.Structure):
+    """Steam's array of strings, as used for the tags."""
     _fields_ = [("strings", ctypes.POINTER(c_char_p)), ("count", i32)]
 
 
 class SubmitResult(ctypes.Structure):
+    """Steam's answer to the submission of an update."""
     _fields_ = [("result", i32), ("needsLegalAgreement", ctypes.c_bool), ("itemId", u64)]
 
 
 def load_steam():
+    """Loads the game's Steam library and declares the signatures of the calls used."""
     os.environ["SteamAppId"] = str(APP_ID)
     os.environ["SteamGameId"] = str(APP_ID)
     lib = ctypes.CDLL(str(NATIVES / "libsteam_api.so"))
@@ -70,6 +73,7 @@ def load_steam():
 
 
 def read_fields(path):
+    """Reads the key and value lines of workshop.txt, keeping repeated keys in order."""
     fields = {}
     for line in path.read_text(encoding="utf-8").split("\n"):
         key, _, value = line.partition("=")
@@ -78,6 +82,7 @@ def read_fields(path):
 
 
 def refuse_generated_files():
+    """Exits when the upload folder holds files the game generated from the maintainer's addons."""
     found = [path for name in GENERATED_FILES for path in (STAGING / "Contents").rglob(name)]
     if found:
         sys.exit("the upload folder holds files the game generated from the maintainer's addons, run "
@@ -85,10 +90,12 @@ def refuse_generated_files():
 
 
 def mod_info_value(key):
+    """Reads a value of mod.info."""
     return re.search(rf"^{key}=(.+)$", build.MOD_INFO.read_text(encoding="utf-8"), re.MULTILINE).group(1).strip()
 
 
 def prepare(lib, ugc, item_id, fields, description):
+    """Starts the item update and sets its title, description, visibility, tags, content and preview."""
     handle = lib.SteamAPI_ISteamUGC_StartItemUpdate(ugc, APP_ID, int(item_id))
     if handle == INVALID_HANDLE:
         sys.exit("StartItemUpdate returned an invalid handle")
@@ -109,6 +116,7 @@ def prepare(lib, ugc, item_id, fields, description):
 
 
 def submit(lib, ugc, utils, handle, note):
+    """Submits the update and waits for Steam's answer, printing the progress."""
     call = lib.SteamAPI_ISteamUGC_SubmitItemUpdate(ugc, handle, note.encode())
     if call == 0:
         sys.exit("SubmitItemUpdate was refused (invalid handle)")
@@ -130,6 +138,7 @@ def submit(lib, ugc, utils, handle, note):
 
 
 def main():
+    """Prepares the update, and submits it only when --submit is passed."""
     fields = read_fields(STAGING / "workshop.txt")
     item_id, mod_id, version = fields["id"][0], mod_info_value("id"), mod_info_value("modversion")
     description = "\n".join(fields["description"]) + f"\n\nWorkshop ID: {item_id}\nMod ID: {mod_id}"

@@ -18,23 +18,28 @@ DOWNMIX_WEIGHT = 0.7071
 
 
 def db(value):
+    """Converts a linear level to dB."""
     return 20 * math.log10(value + 1e-9)
 
 
 def speakers(audio):
+    """RMS level of every speaker channel of the rendered mix."""
     return [float(math.sqrt((audio[:, i] ** 2).mean())) for i in range(audio.shape[1])]
 
 
 def pulse(levels):
+    """Ear levels when only the front left and front right speakers reach the ears."""
     return levels[lab.SPEAKER_FRONT_LEFT], levels[lab.SPEAKER_FRONT_RIGHT]
 
 
 def downmix(levels):
+    """Ear levels of a correct stereo fold down of the 5.1 mix."""
     fl, fr, c, _, sl, sr = levels[:6]
     return fl + DOWNMIX_WEIGHT * (c + sl), fr + DOWNMIX_WEIGHT * (c + sr)
 
 
 def main():
+    """Prints the PulseAudio and fold down ear levels for a source around the listener."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--distance", type=float, default=4.0)
     args = parser.parse_args()
@@ -43,6 +48,7 @@ def main():
     lab.write_test_signal(signal, (300, 1000, 3000))
 
     def engine_setup(channel):
+        """Applies the distance settings the game uses for radios."""
         lab.fmod.FMOD_Channel_Set3DMinMaxDistance(channel, 2, 75)
         lab.fmod.FMOD_Channel_Set3DLevel(channel, 1.0)
 

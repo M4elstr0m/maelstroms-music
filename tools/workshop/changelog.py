@@ -11,16 +11,20 @@ UNRELEASED = "Unreleased"
 
 
 class Release:
+    """One changelog section: a version, its date and its entries by group."""
     def __init__(self, version, date):
+        """Creates an empty section."""
         self.version = version
         self.date = date
         self.groups = {}
 
     def is_empty(self):
+        """Whether the section has no entry."""
         return not any(self.groups.values())
 
 
 def parse(text):
+    """Parses a Keep a Changelog document into its sections, newest first."""
     releases, release, group = [], None, None
     for line in text.replace("\r\n", "\n").split("\n"):
         match = RELEASE.match(line)
@@ -39,6 +43,7 @@ def parse(text):
 
 
 def select(releases, version=None):
+    """Returns the requested version, or the newest section that has content."""
     if version:
         for release in releases:
             if release.version == version:
@@ -51,6 +56,7 @@ def select(releases, version=None):
 
 
 def latest_released(releases):
+    """The newest section that is not Unreleased, or None."""
     for release in releases:
         if release.version != UNRELEASED:
             return release
@@ -58,12 +64,14 @@ def latest_released(releases):
 
 
 def ordered_groups(release):
+    """The non empty groups of a section in the usual order (Added, Changed, Fixed, Removed)."""
     names = [name for name in GROUP_ORDER if name in release.groups]
     names += [name for name in release.groups if name not in GROUP_ORDER]
     return [(name, release.groups[name]) for name in names if release.groups[name]]
 
 
 def change_note_markdown(release):
+    """Renders a section as the short Markdown change note shown on the Workshop."""
     title = "Upcoming changes" if release.version == UNRELEASED else f"Version {release.version}"
     lines = [f"**{title}**"]
     for name, items in ordered_groups(release):
@@ -74,6 +82,7 @@ def change_note_markdown(release):
 
 
 def release_notes_markdown(release):
+    """Renders a section as Markdown release notes with a heading per group."""
     lines = []
     for name, items in ordered_groups(release):
         lines.append(f"### {name}")
@@ -83,6 +92,7 @@ def release_notes_markdown(release):
 
 
 def draft(subjects):
+    """Turns conventional commit subjects into changelog entries, ignoring types that players do not see."""
     groups = {}
     for subject in subjects:
         match = COMMIT.match(subject.strip())

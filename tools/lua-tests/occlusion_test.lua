@@ -4,7 +4,9 @@ package.path = root .. "shared/?.lua;" .. root .. "client/?.lua;" .. package.pat
 
 local squares, rooms, buildings = {}, {}, {}
 
+-- Creates a named building.
 local function newBuilding(name) buildings[name] = { name = name }; return buildings[name] end
+-- Creates a room of a building on a level.
 local function newRoom(name, building, level)
     local room = { name = name }
     function room:getBuilding() return building end
@@ -12,6 +14,7 @@ local function newRoom(name, building, level)
     rooms[name] = room
     return room
 end
+-- Creates and registers a grid square, with or without line of sight to the observer.
 local function newSquare(x, y, z, room, couldSee)
     local square = { x = x, y = y, z = z }
     function square:getRoom() return room end
@@ -30,16 +33,19 @@ require "Playback/Occlusion"
 local Occlusion = MaelstromMusic.Playback.Occlusion
 
 local failures = 0
+-- Prints the result of one assertion and counts failures.
 local function check(description, condition)
     print((condition and "pass  " or "FAIL  ") .. description)
     if not condition then failures = failures + 1 end
 end
+-- Whether two numbers are equal within rounding.
 local function near(a, b) return math.abs(a - b) < 1e-6 end
 
 local houseA, houseB = newBuilding("A"), newBuilding("B")
 local kitchen, hall, other = newRoom("kitchen", houseA, 0), newRoom("hall", houseA, 0), newRoom("other", houseB, 0)
 local upstairs = newRoom("upstairs", houseA, 1)
 
+-- Creates the observer standing in a room.
 local function observerIn(room, x, y, z)
     local square = newSquare(x, y, z, room, true)
     return { square = square, room = room, floor = z, index = 0 }
