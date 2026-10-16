@@ -1,6 +1,5 @@
 require "Namespace"
-
-MaelstromMusic.Json = {}
+require "Json/Scalars"
 
 -- Returns the position of the first non whitespace character from pos.
 local function skipWhitespace(str, pos)
@@ -8,68 +7,7 @@ local function skipWhitespace(str, pos)
     return stop + 1
 end
 
-local escapeMap = {
-    ["\""] = "\"",
-    ["\\"] = "\\",
-    ["/"] = "/",
-    ["b"] = "\b",
-    ["f"] = "\f",
-    ["n"] = "\n",
-    ["r"] = "\r",
-    ["t"] = "\t",
-}
-
 local parseValue
-
--- Parses a JSON string at pos (escapes and \u sequences become UTF-8), returns it and the next position.
-local function parseString(str, pos)
-    local out = {}
-    local i = pos + 1
-    local len = string.len(str)
-    while i <= len do
-        local c = string.sub(str, i, i)
-        if c == "\"" then
-            return table.concat(out), i + 1
-        elseif c == "\\" then
-            local nextC = string.sub(str, i + 1, i + 1)
-            if nextC == "u" then
-                local hex = string.sub(str, i + 2, i + 5)
-                local code = tonumber(hex, 16) or 63
-                if code < 0x80 then
-                    table.insert(out, string.char(code))
-                elseif code < 0x800 then
-                    table.insert(out, string.char(
-                        0xC0 + math.floor(code / 0x40),
-                        0x80 + (code % 0x40)
-                    ))
-                else
-                    table.insert(out, string.char(
-                        0xE0 + math.floor(code / 0x1000),
-                        0x80 + (math.floor(code / 0x40) % 0x40),
-                        0x80 + (code % 0x40)
-                    ))
-                end
-                i = i + 6
-            else
-                table.insert(out, escapeMap[nextC] or nextC)
-                i = i + 2
-            end
-        else
-            table.insert(out, c)
-            i = i + 1
-        end
-    end
-    error("MaelstromMusic.Json: unterminated string at position " .. pos)
-end
-
--- Parses a JSON number at pos, returns it and the next position.
-local function parseNumber(str, pos)
-    local _, stop, numStr = string.find(str, "^(-?%d+%.?%d*[eE]?[-+]?%d*)", pos)
-    if not numStr then
-        error("MaelstromMusic.Json: invalid number at position " .. pos)
-    end
-    return tonumber(numStr), stop + 1
-end
 
 -- Parses a JSON object at pos into a table, returns it and the next position.
 local function parseObject(str, pos)
@@ -84,7 +22,7 @@ local function parseObject(str, pos)
             error("MaelstromMusic.Json: expected string key at position " .. i)
         end
         local key
-        key, i = parseString(str, i)
+        key, i = MaelstromMusic.Json.Scalars.text(str, i)
         i = skipWhitespace(str, i)
         if string.sub(str, i, i) ~= ":" then
             error("MaelstromMusic.Json: expected ':' at position " .. i)
@@ -133,7 +71,7 @@ end
 parseValue = function(str, pos)
     local c = string.sub(str, pos, pos)
     if c == "\"" then
-        return parseString(str, pos)
+        return MaelstromMusic.Json.Scalars.text(str, pos)
     elseif c == "{" then
         return parseObject(str, pos)
     elseif c == "[" then
@@ -145,7 +83,7 @@ parseValue = function(str, pos)
     elseif c == "n" and string.sub(str, pos, pos + 3) == "null" then
         return nil, pos + 4
     elseif c == "-" or (c >= "0" and c <= "9") then
-        return parseNumber(str, pos)
+        return MaelstromMusic.Json.Scalars.number(str, pos)
     else
         error("MaelstromMusic.Json: unexpected character '" .. tostring(c) .. "' at position " .. pos)
     end

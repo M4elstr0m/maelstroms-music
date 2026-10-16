@@ -1,5 +1,6 @@
 require "Namespace"
 require "Frequency"
+require "Hash"
 
 MaelstromMusic.Playback.DeviceRange = {}
 
@@ -22,15 +23,6 @@ local function stableDeviceId(deviceData)
     end
 
     return nil
-end
-
--- Stable string hash used to offset the window of a device.
-local function seedHash(str)
-    local hash = 5381
-    for i = 1, #str do
-        hash = (hash * 33 + string.byte(str, i)) % 2147483647
-    end
-    return hash
 end
 
 -- Widens the tunable range of a device with a per device window of the extended band,
@@ -61,7 +53,7 @@ function MaelstromMusic.Playback.DeviceRange.ensureWindow(deviceData, totalStati
     local maxOffsetSlots = math.floor(((extendedMax - extendedMin) - extraWidth) / FREQ_STEP)
     local offset = 0
     if maxOffsetSlots > 0 then
-        offset = (seedHash(id) % (maxOffsetSlots + 1)) * FREQ_STEP
+        offset = (MaelstromMusic.Hash.of(id) % (maxOffsetSlots + 1)) * FREQ_STEP
     end
 
     local extraMin = extendedMin + offset
