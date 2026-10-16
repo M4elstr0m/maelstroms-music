@@ -14,4 +14,5 @@ MaelstromMusic.Playback = MaelstromMusic.Playback or {}
 MaelstromMusic.Playback.Device = MaelstromMusic.Playback.Device or {}
 MaelstromMusic.Playback.Tick = MaelstromMusic.Playback.Tick or {}
 MaelstromMusic.Ambience = MaelstromMusic.Ambience or {}
+MaelstromMusic.MainMenu = MaelstromMusic.MainMenu or {}
 MaelstromMusic.Addons = MaelstromMusic.Addons or {}
