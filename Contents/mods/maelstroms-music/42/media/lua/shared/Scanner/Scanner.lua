@@ -1,135 +1,14 @@
 require "Namespace"
 require "Log"
 require "Safe"
-require "Fs"
-require "Scanner/Station"
-require "Scanner/Manifest"
 require "Frequency"
 require "Addons/AddonDiscovery"
-
-local MANIFEST_FILE = MaelstromMusic.RADIOS_DIR .. "/_radios_manifest.txt"
-local GENERATED_SCRIPT_FILE = "media/scripts/GeneratedRadios.txt"
+require "Scanner/Stations"
+require "Scanner/Runtime"
+require "Scanner/Sync"
 
 if not MaelstromMusic.Broadcasts then MaelstromMusic.Broadcasts = {} end
 if not MaelstromMusic.Backgrounds then MaelstromMusic.Backgrounds = {} end
-
--- Loads every station file of one directory of one mod into stations.
-local function discoverInDir(modId, baseDir, kind, stations)
-    for _, fileName in ipairs(MaelstromMusic.Fs.listFilesFrom(modId, baseDir)) do
-        local stationId, station = MaelstromMusic.Scanner.Station.tryLoad(modId, baseDir, kind, fileName)
-        if stationId then
-            stations[stationId] = station
-        end
-    end
-end
-
--- Loads the stations of a directory across every source, in source order.
-local function collectEntries(sources, baseDir, kind)
-    local entries = {}
-    for _, source in ipairs(sources) do
-        for _, fileName in ipairs(MaelstromMusic.Fs.listFilesFrom(source.modId, baseDir)) do
-            local stationId, station = MaelstromMusic.Scanner.Station.tryLoad(source.modId, baseDir, kind, fileName)
-            if stationId then
-                table.insert(entries, { stationId = stationId, station = station })
-            end
-        end
-    end
-    return entries
-end
-
--- Stations opted into "mergeTracks" and sharing the same title (case-insensitive) are
--- folded into a single station, tracks from every contributor. First source encountered
--- (base mod, then addons in modId order) keeps its stationId and wins on shuffle/fade/
--- frequency for the rest. Stations without mergeTracks never merge with anything, even
--- if another station happens to share their title.
-local function mergeSharedStations(entries, stations)
-    local primaryIdByTitle = {}
-    for _, entry in ipairs(entries) do
-        local stationId, station = entry.stationId, entry.station
-        if station.mergeTracks then
-            local key = string.lower(station.title)
-            local primaryId = primaryIdByTitle[key]
-            if not primaryId then
-                primaryIdByTitle[key] = stationId
-                stations[stationId] = station
-            else
-                local primary = stations[primaryId]
-                for i, trackFile in ipairs(station.trackFiles) do
-                    table.insert(primary.trackFiles, trackFile)
-                    table.insert(primary.trackDirs, station.trackDirs[i])
-                end
-                if station.sequences then
-                    primary.sequences = primary.sequences or {}
-                    for _, seq in ipairs(station.sequences) do
-                        table.insert(primary.sequences, seq)
-                    end
-                end
-                MaelstromMusic.Log.write("merged " .. #station.trackFiles .. " track(s) from '" .. station.ownerModId .. "' into shared " .. station.kind .. " '" .. primary.title .. "' (owned by '" .. primary.ownerModId .. "') via mergeTracks.")
-            end
-        else
-            stations[stationId] = station
-        end
-    end
-end
-
--- Returns the lowercase extension of a file name, or nil.
-local function getExtension(fileName)
-    local ext = string.match(fileName, "%.([%a%d]+)$")
-    return ext and string.lower(ext) or nil
-end
-
--- Lists the playable audio files of the main menu folder of a mod, skipping names with a comma.
-local function findMainMenuFiles(modId)
-    local files = {}
-    for _, fileName in ipairs(MaelstromMusic.Fs.listFilesFrom(modId, MaelstromMusic.MAINMENU_DIR)) do
-        local ext = getExtension(fileName)
-        if ext and MaelstromMusic.AUDIOFILE_EXTENSIONS[ext] then
-            if string.find(fileName, ",", 1, true) then
-                MaelstromMusic.Log.write("skipping '" .. fileName .. "' - a comma in the filename breaks Project Zomboid's sound script parser. Rename the file to remove the comma.")
-            else
-                table.insert(files, fileName)
-            end
-        end
-    end
-    table.sort(files)
-    return files
-end
-
--- Gathers the main menu tracks of every source into one list.
-local function collectMainMenuFiles(sources)
-    local trackFiles = {}
-    local contributingSources = 0
-    for _, source in ipairs(sources) do
-        local files = findMainMenuFiles(source.modId)
-        if #files > 0 then
-            contributingSources = contributingSources + 1
-            for _, fileName in ipairs(files) do
-                table.insert(trackFiles, fileName)
-            end
-        end
-    end
-    if contributingSources > 1 then
-        MaelstromMusic.Log.write("main menu theme: combining " .. #trackFiles .. " track(s) from " .. contributingSources .. " source(s), played in random order.")
-    end
-    return trackFiles
-end
-
--- Gathers the game over tracks, and the folder of each, of every source.
-local function collectDeathTracks(sources)
-    local trackFiles, trackDirs = {}, {}
-    for _, source in ipairs(sources) do
-        for _, fileName in ipairs(MaelstromMusic.Fs.listFilesFrom(source.modId, MaelstromMusic.DEATHS_DIR)) do
-            local _, station = MaelstromMusic.Scanner.Station.tryLoad(source.modId, MaelstromMusic.DEATHS_DIR, "death", fileName)
-            if station then
-                for index, trackFile in ipairs(station.trackFiles) do
-                    table.insert(trackFiles, trackFile)
-                    table.insert(trackDirs, station.trackDirs[index])
-                end
-            end
-        end
-    end
-    return trackFiles, trackDirs
-end
 
 -- Returns the base mod followed by the active addons.
 local function buildSources()
@@ -140,66 +19,71 @@ local function buildSources()
     return sources
 end
 
--- Whether a table has no entries.
-local function isEmpty(t)
-    for _ in pairs(t) do
-        return false
+-- Logs the addons found next to the base mod.
+local function logAddons(sources)
+    if #sources <= 1 then
+        return
     end
-    return true
+    local names = {}
+    for i = 2, #sources do
+        table.insert(names, sources[i].name .. " (" .. sources[i].modId .. ")")
+    end
+    MaelstromMusic.Log.write("found " .. #names .. " addon(s): " .. table.concat(names, ", "))
 end
 
--- Discovers every station of every source: radios, TVs, one background set (first source wins),
--- plus the main menu and game over pools.
-local function discoverStations(sources)
-    local stations = {}
+-- Returns the station ids in alphabetical order so every output is deterministic.
+local function sortedStationIds(stations)
+    local stationIds = {}
+    for stationId, _ in pairs(stations) do
+        table.insert(stationIds, stationId)
+    end
+    table.sort(stationIds)
+    return stationIds
+end
 
-    mergeSharedStations(collectEntries(sources, MaelstromMusic.RADIOS_DIR, "radio"), stations)
-    mergeSharedStations(collectEntries(sources, MaelstromMusic.TVS_DIR, "television"), stations)
-
-    local backgroundWinner = nil
-    for _, source in ipairs(sources) do
-        local candidate = {}
-        discoverInDir(source.modId, MaelstromMusic.BACKGROUNDS_DIR, "background", candidate)
-        if not isEmpty(candidate) then
-            if not backgroundWinner then
-                backgroundWinner = source
-                for stationId, station in pairs(candidate) do
-                    stations[stationId] = station
-                end
-            else
-                MaelstromMusic.Log.write("background soundtrack from '" .. source.name .. "' (" .. source.modId .. ") was ignored because '" .. backgroundWinner.name .. "' (" .. backgroundWinner.modId .. ") already provides one - only one background soundtrack can be active at a time.")
+-- Splits the ids that sit on a dial from the others, and collects the fixed frequencies they ask for.
+local function tunableStations(stations, stationIds)
+    local tunableIds = {}
+    local fixedFrequencyByStationId = {}
+    for _, stationId in ipairs(stationIds) do
+        local station = stations[stationId]
+        if station.kind == "radio" or station.kind == "television" then
+            table.insert(tunableIds, stationId)
+            if station.fixedFrequency then
+                fixedFrequencyByStationId[stationId] = station.fixedFrequency
             end
         end
     end
+    return tunableIds, fixedFrequencyByStationId
+end
 
-    local mainMenuFiles = collectMainMenuFiles(sources)
-    if #mainMenuFiles > 0 then
-        stations["mainmenu"] = {
-            ownerModId = MaelstromMusic.MOD_ID,
-            rawDir = MaelstromMusic.MAINMENU_DIR,
-            rawName = "",
-            kind = "mainmenu",
-            title = "Main Menu Theme",
-            shuffle = true,
-            trackFiles = mainMenuFiles,
-        }
+-- Assigns frequencies to the tunable stations, logging those left without one.
+local function assignFrequencies(tunableIds, fixedFrequencyByStationId)
+    local frequencyByStationId = MaelstromMusic.Frequency.assign(tunableIds, fixedFrequencyByStationId)
+    for _, stationId in ipairs(tunableIds) do
+        if not frequencyByStationId[stationId] then
+            MaelstromMusic.Log.write("could not assign a free frequency to '" .. stationId .. "', too many stations - skipping it.")
+        end
     end
+    return frequencyByStationId
+end
 
-    local deathFiles, deathDirs = collectDeathTracks(sources)
-    if #deathFiles > 0 then
-        stations["death"] = {
-            ownerModId = MaelstromMusic.MOD_ID,
-            rawDir = MaelstromMusic.DEATHS_DIR,
-            rawName = "",
-            kind = "death",
-            title = "Game Over",
-            shuffle = true,
-            trackFiles = deathFiles,
-            trackDirs = deathDirs,
-        }
-    end
+-- Publishes the runtime tables the playback and the director read.
+local function publish(stations, stationIds, tunableIds, frequencyByStationId)
+    local Runtime = MaelstromMusic.Scanner.Runtime
+    MaelstromMusic.Broadcasts = Runtime.broadcasts(stations, tunableIds, frequencyByStationId)
+    MaelstromMusic.Backgrounds = Runtime.backgrounds(stations, stationIds)
+    MaelstromMusic.MainMenuStation = stations["mainmenu"] and Runtime.pooled("mainmenu", stations["mainmenu"]) or nil
+    MaelstromMusic.DeathStation = stations["death"] and Runtime.pooled("death", stations["death"]) or nil
+end
 
-    return stations
+-- Logs how many stations were loaded.
+local function logCount()
+    local count = 0
+    for _ in pairs(MaelstromMusic.Broadcasts) do count = count + 1 end
+    for _ in pairs(MaelstromMusic.Backgrounds) do count = count + 1 end
+    if MaelstromMusic.MainMenuStation then count = count + 1 end
+    MaelstromMusic.Log.write(count .. " station(s) loaded.")
 end
 
 -- Scans all sources, assigns frequencies, publishes the runtime tables and regenerates
@@ -207,65 +91,16 @@ end
 function MaelstromMusic.Scanner.run()
     MaelstromMusic.Safe.call("scan failed", function()
         local sources = buildSources()
-        if #sources > 1 then
-            local names = {}
-            for i = 2, #sources do
-                table.insert(names, sources[i].name .. " (" .. sources[i].modId .. ")")
-            end
-            MaelstromMusic.Log.write("found " .. #names .. " addon(s): " .. table.concat(names, ", "))
-        end
+        logAddons(sources)
 
-        local stations = discoverStations(sources)
-        local stationIds = MaelstromMusic.Scanner.Manifest.sortedStationIds(stations)
+        local stations = MaelstromMusic.Scanner.Stations.discover(sources)
+        local stationIds = sortedStationIds(stations)
+        local tunableIds, fixedFrequencyByStationId = tunableStations(stations, stationIds)
+        local frequencyByStationId = assignFrequencies(tunableIds, fixedFrequencyByStationId)
 
-        local tunableIds = {}
-        local fixedFrequencyByStationId = {}
-        for _, stationId in ipairs(stationIds) do
-            local station = stations[stationId]
-            if station.kind == "radio" or station.kind == "television" then
-                table.insert(tunableIds, stationId)
-                if station.fixedFrequency then
-                    fixedFrequencyByStationId[stationId] = station.fixedFrequency
-                end
-            end
-        end
-
-        local frequencyByStationId = MaelstromMusic.Frequency.assign(tunableIds, fixedFrequencyByStationId)
-        for _, stationId in ipairs(tunableIds) do
-            if not frequencyByStationId[stationId] then
-                MaelstromMusic.Log.write("could not assign a free frequency to '" .. stationId .. "', too many stations - skipping it.")
-            end
-        end
-
-        MaelstromMusic.Broadcasts = MaelstromMusic.Scanner.Manifest.buildStations(stations, tunableIds, frequencyByStationId)
-        MaelstromMusic.Backgrounds = MaelstromMusic.Scanner.Manifest.buildBackgrounds(stations, stationIds)
-        MaelstromMusic.MainMenuStation = stations["mainmenu"] and MaelstromMusic.Scanner.Manifest.buildPooledStation("mainmenu", stations["mainmenu"]) or nil
-        MaelstromMusic.DeathStation = stations["death"] and MaelstromMusic.Scanner.Manifest.buildPooledStation("death", stations["death"]) or nil
-
-        local newManifest = MaelstromMusic.Scanner.Manifest.buildText(stations, stationIds)
-        local oldManifest = MaelstromMusic.Fs.readFile(MANIFEST_FILE)
-
-        if newManifest ~= oldManifest then
-            MaelstromMusic.Log.write("detected new/changed stations, regenerating sounds...")
-            local scriptText = MaelstromMusic.Scanner.Manifest.buildGeneratedScript(stations, stationIds)
-            local wroteScript = MaelstromMusic.Fs.writeFile(GENERATED_SCRIPT_FILE, scriptText)
-            MaelstromMusic.Fs.writeFile(MANIFEST_FILE, newManifest)
-
-            if wroteScript then
-                local reloaded = pcall(reloadSoundFiles)
-                if not reloaded then
-                    MaelstromMusic.Log.write("reloadSoundFiles() failed - a restart may be needed for new stations to play.")
-                end
-            else
-                MaelstromMusic.Log.write("could not write generated sound script - a restart may be needed for new stations to play.")
-            end
-        end
-
-        local count = 0
-        for _ in pairs(MaelstromMusic.Broadcasts) do count = count + 1 end
-        for _ in pairs(MaelstromMusic.Backgrounds) do count = count + 1 end
-        if MaelstromMusic.MainMenuStation then count = count + 1 end
-        MaelstromMusic.Log.write(count .. " station(s) loaded.")
+        publish(stations, stationIds, tunableIds, frequencyByStationId)
+        MaelstromMusic.Scanner.Sync.run(stations, stationIds)
+        logCount()
 
         MaelstromMusic.ScanComplete = true
     end)

@@ -8,7 +8,6 @@ note of the version in mod.info from CHANGELOG.md, and uses the Steam session lo
 PZ_NATIVES points at the game's natives folder when it is not in the default Steam library.
 """
 import ctypes
-import os
 import re
 import sys
 import time
@@ -16,60 +15,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import build
+import sources
+import steam_api
+from steam_api import APP_ID, INVALID_HANDLE, SUBMIT_ITEM_UPDATE_RESULT, StringArray, SubmitResult, c_char_p, u64
 
 ROOT = Path(__file__).resolve().parents[2]
 STAGING = Path.home() / "Zomboid" / "Workshop" / ROOT.name
-NATIVES = Path(os.environ.get("PZ_NATIVES", "~/Games/Steam/steamapps/common/ProjectZomboid/projectzomboid/natives")).expanduser()
-APP_ID = 108600
 GENERATED_FILES = ("GeneratedRadios.txt", "_radios_manifest.txt")
-INVALID_HANDLE = 0xFFFFFFFFFFFFFFFF
-SUBMIT_ITEM_UPDATE_RESULT = 3404
 VISIBILITIES = {"public": 0, "friendsOnly": 1, "private": 2, "unlisted": 3}
 POLL_SECONDS = 1.0
 TIMEOUT_SECONDS = 600
-
-P, c_char_p, u64, u32, i32 = ctypes.c_void_p, ctypes.c_char_p, ctypes.c_uint64, ctypes.c_uint32, ctypes.c_int32
-
-
-class StringArray(ctypes.Structure):
-    """Steam's array of strings, as used for the tags."""
-    _fields_ = [("strings", ctypes.POINTER(c_char_p)), ("count", i32)]
-
-
-class SubmitResult(ctypes.Structure):
-    """Steam's answer to the submission of an update."""
-    _fields_ = [("result", i32), ("needsLegalAgreement", ctypes.c_bool), ("itemId", u64)]
-
-
-def load_steam():
-    """Loads the game's Steam library and declares the signatures of the calls used."""
-    os.environ["SteamAppId"] = str(APP_ID)
-    os.environ["SteamGameId"] = str(APP_ID)
-    lib = ctypes.CDLL(str(NATIVES / "libsteam_api.so"))
-    lib.SteamAPI_InitFlat.argtypes = [ctypes.c_char_p]
-    lib.SteamAPI_InitFlat.restype = ctypes.c_int
-    lib.SteamAPI_SteamUGC_v021.restype = P
-    lib.SteamAPI_SteamUtils_v010.restype = P
-    lib.SteamAPI_ISteamUGC_StartItemUpdate.argtypes = [P, u32, u64]
-    lib.SteamAPI_ISteamUGC_StartItemUpdate.restype = u64
-    for setter in ("SetItemTitle", "SetItemDescription", "SetItemContent", "SetItemPreview"):
-        function = getattr(lib, f"SteamAPI_ISteamUGC_{setter}")
-        function.argtypes = [P, u64, c_char_p]
-        function.restype = ctypes.c_bool
-    lib.SteamAPI_ISteamUGC_SetItemVisibility.argtypes = [P, u64, ctypes.c_int]
-    lib.SteamAPI_ISteamUGC_SetItemVisibility.restype = ctypes.c_bool
-    lib.SteamAPI_ISteamUGC_SetItemTags.argtypes = [P, u64, ctypes.POINTER(StringArray), ctypes.c_bool]
-    lib.SteamAPI_ISteamUGC_SetItemTags.restype = ctypes.c_bool
-    lib.SteamAPI_ISteamUGC_SubmitItemUpdate.argtypes = [P, u64, c_char_p]
-    lib.SteamAPI_ISteamUGC_SubmitItemUpdate.restype = u64
-    lib.SteamAPI_ISteamUGC_GetItemUpdateProgress.argtypes = [P, u64, ctypes.POINTER(u64), ctypes.POINTER(u64)]
-    lib.SteamAPI_ISteamUGC_GetItemUpdateProgress.restype = ctypes.c_int
-    lib.SteamAPI_ISteamUtils_IsAPICallCompleted.argtypes = [P, u64, ctypes.POINTER(ctypes.c_bool)]
-    lib.SteamAPI_ISteamUtils_IsAPICallCompleted.restype = ctypes.c_bool
-    lib.SteamAPI_ISteamUtils_GetAPICallResult.argtypes = [P, u64, P, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_bool)]
-    lib.SteamAPI_ISteamUtils_GetAPICallResult.restype = ctypes.c_bool
-    return lib
 
 
 def read_fields(path):
@@ -91,7 +46,7 @@ def refuse_generated_files():
 
 def mod_info_value(key):
     """Reads a value of mod.info."""
-    return re.search(rf"^{key}=(.+)$", build.MOD_INFO.read_text(encoding="utf-8"), re.MULTILINE).group(1).strip()
+    return re.search(rf"^{key}=(.+)$", sources.MOD_INFO.read_text(encoding="utf-8"), re.MULTILINE).group(1).strip()
 
 
 def prepare(lib, ugc, item_id, fields, description):
@@ -142,7 +97,7 @@ def main():
     fields = read_fields(STAGING / "workshop.txt")
     item_id, mod_id, version = fields["id"][0], mod_info_value("id"), mod_info_value("modversion")
     description = "\n".join(fields["description"]) + f"\n\nWorkshop ID: {item_id}\nMod ID: {mod_id}"
-    note = build.change_note(version)
+    note = sources.change_note(version)
     refuse_generated_files()
 
     print("item       :", item_id)
@@ -150,7 +105,7 @@ def main():
     print("version    :", version)
     print("description:", len(description.encode()), "bytes, change note:", len(note.encode()), "bytes")
 
-    lib = load_steam()
+    lib = steam_api.load()
     error = ctypes.create_string_buffer(1024)
     if lib.SteamAPI_InitFlat(error) != 0:
         sys.exit("Steam API init failed: " + error.value.decode(errors="replace"))

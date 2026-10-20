@@ -8,7 +8,7 @@ A playback entry (`Playback/Cache.lua`) keeps direct references to a device and 
 
 ## Decision
 
-- `Device.isPresent` decides whether the device still exists: an object has a square (`getObjectIndex() ~= -1`), an item has a container or a world item, a vehicle part still has a vehicle.
+- `Device.Location.isPresent` decides whether the device still exists: an object has a square (`getObjectIndex() ~= -1`), an item has a container or a world item, a vehicle part still has a vehicle.
 - When a non vehicle device disappears its entry is not destroyed. It is muted at once and kept for 5 seconds (`ORPHAN_GRACE_MS`), then released if nothing took it over. A TV that stays removed is therefore silent immediately.
 - `Device.ensurePlaying` lets a powered device take over such an entry instead of starting a track: first the entry that shares its `DeviceData` (which is what the game's move code produces), otherwise any muted entry of the same station within 20 tiles. The sound is reconfigured for the new device's mode and keeps playing the same track. An explicit Tune In still starts a new track.
 - Vehicle radios are dropped immediately when the vehicle goes (their emitter belongs to the vehicle).

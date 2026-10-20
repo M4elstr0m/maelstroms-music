@@ -62,9 +62,9 @@ local function rolloffGain(distance)
     return MIN_ROLLOFF_DISTANCE / math.max(distance, MIN_ROLLOFF_DISTANCE)
 end
 
--- World position of a stage emitter for a side, candidate angle and radius around the origin.
-function MaelstromMusic.Playback.Stage.position(origin, forwardX, forwardY, side, candidate, radius)
-    local azimuth = STAGE_ANGLE + candidate.angleOffset
+-- World position of a stage emitter for a side, angle offset and radius around the origin.
+function MaelstromMusic.Playback.Stage.position(origin, forwardX, forwardY, side, angleOffset, radius)
+    local azimuth = STAGE_ANGLE + angleOffset
     local along, across = math.cos(azimuth), math.sin(azimuth) * side
     local x = origin.x + radius * (forwardX * along - forwardY * across)
     local y = origin.y + radius * (forwardY * along + forwardX * across)
@@ -74,7 +74,7 @@ end
 -- Places one candidate and measures how far its occlusion is from the target occlusion.
 local function evaluate(observer, origin, forwardX, forwardY, side, target, candidate)
     local radius = math.max(MIN_STAGE_RADIUS, target.distance + candidate.radiusOffset)
-    local x, y = MaelstromMusic.Playback.Stage.position(origin, forwardX, forwardY, side, candidate, radius)
+    local x, y = MaelstromMusic.Playback.Stage.position(origin, forwardX, forwardY, side, candidate.angleOffset, radius)
     local occlusion = MaelstromMusic.Playback.Occlusion.direct(observer, x, y, target.z)
     return { x = x, y = y, radius = radius, candidate = candidate, deficit = target.occlusion - occlusion }
 end
