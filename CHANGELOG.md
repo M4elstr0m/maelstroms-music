@@ -4,6 +4,12 @@ All notable changes to Maelstrom's Music are listed here, newest first. The Work
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-10-20
+
+### Changed
+- The code is split into smaller modules, with no change in behaviour (#52)
+- Lower cost per frame for the stereo safe positioning, for the vanilla music mute and for reading station files (#52)
+
 ## [1.1.0] - 2026-10-15
 
 ### Added
